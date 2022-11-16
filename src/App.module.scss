@@ -1,0 +1,55 @@
+.container {
+  margin: 20px;
+  &__item {
+    margin-bottom: 20px;
+    &__submit {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex-wrap: wrap;
+      &__generate {
+        color: #fff;
+        padding: 5px 15px;
+        cursor: pointer;
+        border: none;
+        border-radius: 2px;
+        border-color: #1890ff;
+        background: #1890ff;
+        text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
+        box-shadow: 0 2px 0 rgb(0 0 0 / 5%);
+      }
+      div {
+        margin: 0 10px 10px 0;
+      }
+    }
+  }
+  &__title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &__button {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+}
+.range {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.chart {
+  position: relative;
+  &__heart {
+    position: absolute;
+    color: red;
+    cursor: pointer;
+    z-index: 1000;
+    top: 0;
+    right: 0;
+    margin: 30px 10px 0 0;
+    font-size: 1.75rem;
+  }
+}
