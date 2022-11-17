@@ -1,13 +1,11 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
-import { PageHeader, Radio } from "antd";
+import { Radio } from "antd";
 import styles from "./styles.module.scss";
 import { useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
-import { useNavigate } from "react-router-dom";
 import { listTimeRange, TimePeriod } from "../../App";
 import PrimaryChart from "../../Components/PrimaryChart";
 import { DataProps } from "../../Components/PrimaryChart/interfaces";
-import SecondaryChart from "../../Components/SecondaryChart";
 import { Status } from "../../Constants/enum";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { getQueryParam, updateUrl } from "../../Utils/query";
@@ -41,7 +39,6 @@ const Coins = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const { height } = useWindowDimensions();
-  let navigate = useNavigate();
   useEffect(() => {
     const handleResize = (width?: number) => {
       setBoxWidth(width || 0);

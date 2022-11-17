@@ -13,12 +13,21 @@ import { max, min, extent, bisector } from "d3-array";
 import { DataProps, PrimaryChartProps } from "./interfaces";
 import { SC } from "./styled";
 import LineChart from "../LineChart";
-
+export const handleFormatCoin = (coin: number) => {
+  return coin < 0.01
+    ? "0,0.0000"
+    : coin < 0.1
+    ? "0,0.000"
+    : coin < 10
+    ? "0,0.00"
+    : "0,0";
+};
 // accessors
 const getDate = (d: DataProps) => new Date(d.date);
 const getStockValue = (d: DataProps) => d?.price || 0;
-const getFormatValue = (d: DataProps) =>
-  numeral(d?.price || 0).format("$0,0.00");
+const getFormatValue = (d: DataProps) => {
+  return numeral(d?.price || 0).format(`$${handleFormatCoin(d?.price || 0)}`);
+};
 const bisectDate = bisector<DataProps, Date>((d) => new Date(d.date)).left;
 
 const PrimaryChart: React.FC<PrimaryChartProps> = ({

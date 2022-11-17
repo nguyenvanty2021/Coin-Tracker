@@ -83,6 +83,8 @@ const DrawerComponent = ({
   list: ListWatchedProps[];
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const handleFormatCoin = (coin: number) =>
+    coin < 0.001 ? 4 : coin < 0.01 ? 3 : coin < 10 ? 2 : 0;
   const columns: ColumnsType<ListWatchedProps> = [
     {
       title: "Pair",
@@ -96,13 +98,11 @@ const DrawerComponent = ({
       title: "Current",
       dataIndex: "currentPrice",
       key: "currentPrice",
-      render: (_, record) => (
-        <p>
-          {`${(
-            parseFloat(record.priceCoinFrom) / parseFloat(record.priceCoinTo)
-          ).toFixed(3)}`}
-        </p>
-      ),
+      render: (_, record) => {
+        const total =
+          parseFloat(record.priceCoinFrom) / parseFloat(record.priceCoinTo);
+        return <p>{`${total.toFixed(handleFormatCoin(total))}`}</p>;
+      },
     },
     {
       title: "Link",
