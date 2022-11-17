@@ -112,7 +112,7 @@ const DrawerComponent = ({
         <Link
           to={{
             pathname: `/coins/${record.coinFrom}/${record.coinTo}`,
-            search: `?coinFrom=${record.coinFrom}&coinTo=${record.coinTo}&id=${record.idCoinFrom}&range=1D`,
+            search: `?range=1D`,
           }}
         >
           Link
@@ -141,15 +141,19 @@ function App() {
   const [listChart, setListChart] = useState<DataProps[]>([]);
   const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [coin, setCoin] = useState<string>("");
   const local: any = localStorage?.getItem("listWatched");
   const listWatched: ListWatchedProps[] = local && JSON.parse(local);
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
   );
+  const objectCoin: any =
+    listWatched?.length > 0 &&
+    listWatched.find((v) => `${v.coinFrom}${v.coinTo}` === coin);
   const defaultValues: FormProps<string> = {
     pairOfCoin:
-      queryParam["coinFrom"] && queryParam["coinTo"]
-        ? `${queryParam["coinFrom"]}/${queryParam["coinTo"]}`
+      objectCoin && objectCoin["coinFrom"] && objectCoin["coinTo"]
+        ? `${objectCoin["coinFrom"]}/${objectCoin["coinTo"]}`
         : "",
     timeRange:
       indexRange > -1
@@ -198,10 +202,8 @@ function App() {
           };
         });
         setListChart(result);
-        updateUrl("coinFrom", coinFrom);
-        updateUrl("coinTo", coinTo);
+        setCoin(`${coinFrom}${coinTo}`);
         updateUrl("range", listKeys[index]);
-        updateUrl("id", idCoinFrom);
         // localStorage.setItem(
         //   "listWatched",
         //   JSON.stringify([
@@ -243,12 +245,12 @@ function App() {
             ])
           );
         }
-        notify("success", "Generate URL Successfully!", 3000);
+        notify("success", "Generate URL Successfully!", 2000);
       } else {
-        notify("warning", "Pair of Coins is not valid!", 3000);
+        notify("warning", "Pair of Coins is not valid!", 2000);
       }
     } catch (error) {
-      notify("warning", "Pair of Coins is not valid!", 3000);
+      notify("warning", "Pair of Coins is not valid!", 2000);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -389,8 +391,8 @@ function App() {
                   // </Button>
                   <Link
                     to={{
-                      pathname: `/coins/${queryParam["coinFrom"]}/${queryParam["coinTo"]}`,
-                      search: `?coinFrom=${queryParam["coinFrom"]}&coinTo=${queryParam["coinTo"]}&id=${queryParam["id"]}&range=${queryParam["range"]}`,
+                      pathname: `/coins/${objectCoin["coinFrom"]}/${objectCoin["coinTo"]}`,
+                      search: `?range=${queryParam["range"]}`,
                     }}
                   >
                     Generated Link

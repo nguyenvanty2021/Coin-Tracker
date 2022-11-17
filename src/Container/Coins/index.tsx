@@ -10,8 +10,11 @@ import { Status } from "../../Constants/enum";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { getQueryParam, updateUrl } from "../../Utils/query";
 import Loading from "../../Components/Loading";
+import { useParams } from "react-router-dom";
 
 const Coins = () => {
+  const params = useParams();
+  const { from, to } = params;
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
   const listWatched: {
@@ -20,12 +23,13 @@ const Coins = () => {
     idCoinFrom: string;
     watched: boolean;
   }[] = local && JSON.parse(local);
+  const objectCoin: any =
+    listWatched?.length > 0 &&
+    listWatched.find((v) => `${v.coinFrom}${v.coinTo}` === `${from}${to}`);
   const indexHeart =
     listWatched?.length > 0
       ? listWatched.findIndex(
-          (values) =>
-            `${values.coinFrom}${values.coinTo}` ===
-            `${queryParam["coinFrom"]}${queryParam["coinTo"]}`
+          (values) => `${values.coinFrom}${values.coinTo}` === `${from}${to}`
         )
       : -1;
   const [statusHeart, setStatusHeart] = useState<boolean>(
@@ -55,8 +59,8 @@ const Coins = () => {
     try {
       setLoading(true);
       const res = await coinApi.getAllCoin(
-        queryParam["id"],
-        queryParam["coinTo"],
+        objectCoin ? objectCoin["idCoinFrom"] : "",
+        to || "",
         value
       );
       if (res.status === Status.SUCCESS) {
@@ -123,9 +127,11 @@ const Coins = () => {
         </Radio.Group>
       </div>
       <div className={styles.coins__title}>
-        <h3>{`${queryParam["coinFrom"].toUpperCase()} to ${queryParam[
-          "coinTo"
-        ].toUpperCase()} Price Chart`}</h3>
+        <h3>
+          {from &&
+            to &&
+            `${from.toUpperCase()} to ${to.toUpperCase()} Price Chart`}
+        </h3>
         {statusHeart ? (
           <HeartFilled
             onClick={handleUpdateStatusHeart}
