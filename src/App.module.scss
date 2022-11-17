@@ -44,7 +44,7 @@
   position: relative;
   &__heart {
     position: absolute;
-    color: red;
+    color: red !important;
     cursor: pointer;
     z-index: 1000;
     top: 0;

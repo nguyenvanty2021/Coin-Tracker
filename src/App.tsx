@@ -1,4 +1,4 @@
-import { Button, Col, Modal, Row, Radio } from "antd";
+import { Button, Col, Modal, Row, Radio, Drawer, Table } from "antd";
 import styles from "./App.module.scss";
 import InputComponent from "./Components/Input/index";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -16,6 +16,7 @@ import useWindowDimensions from "./hooks/useWindowDimensions";
 import { DataProps } from "./Components/PrimaryChart/interfaces";
 import SecondaryChart from "./Components/SecondaryChart";
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
+import { ColumnsType } from "antd/lib/table";
 interface FormProps<T> {
   pairOfCoin: T;
   timeRange: T;
@@ -24,6 +25,19 @@ export interface TimeRangeProps<T> {
   id: T;
   value: T;
   key: T;
+}
+interface ListWatchedProps {
+  coinFrom: string;
+  coinTo: string;
+  idCoinFrom: string;
+  watched: boolean;
+}
+interface DataType {
+  key: string;
+  name: string;
+  age: number;
+  address: string;
+  tags: string[];
 }
 const TimePeriod: {
   [key: string]: TimeFilters;
@@ -67,16 +81,74 @@ const listTimeRange: TimeRangeProps<string>[] = [
     value: TimeFilters.ALL,
   },
 ];
-const ModalComponent = ({
+const DrawerComponent = ({
   open,
-  listChart,
+  list,
   setOpen,
 }: {
   open: boolean;
-  listChart: DataProps[];
+  list: ListWatchedProps[];
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const columns: ColumnsType<ListWatchedProps> = [
+    {
+      title: "Pair of Coins",
+      dataIndex: "pairOfCoins",
+      key: "pairOfCoins",
+      render: (_, record) => (
+        <div>{`${record.coinFrom}/${record.coinTo}`.toUpperCase()}</div>
+      ),
+    },
+    {
+      title: "Current Price",
+      dataIndex: "currentPrice",
+      key: "currentPrice",
+    },
+    {
+      title: "Link",
+      dataIndex: "link",
+      key: "link",
+    },
+  ];
+  return (
+    <Drawer
+      width="100%"
+      title="My Watchlist"
+      placement="right"
+      onClose={() => setOpen(false)}
+      open={open}
+    >
+      <Table
+        columns={columns}
+        bordered
+        dataSource={list.filter((v) => v.watched)}
+      />
+    </Drawer>
+  );
+};
+const ModalComponent = ({
+  open,
+  listChart,
+}: {
+  open: boolean;
+  listChart: DataProps[];
+}) => {
   const queryParam = getQueryParam<any>();
+  const local: any = localStorage?.getItem("listWatched");
+  const listWatched: {
+    coinFrom: string;
+    coinTo: string;
+    idCoinFrom: string;
+    watched: boolean;
+  }[] = local && JSON.parse(local);
+  const indexHeart = listWatched.findIndex(
+    (values) =>
+      `${values.coinFrom}${values.coinTo}` ===
+      `${queryParam["coinFrom"]}${queryParam["coinTo"]}`
+  );
+  const [statusHeart, setStatusHeart] = useState<boolean>(
+    indexHeart > -1 ? listWatched[indexHeart].watched : false
+  );
   const [listChartModal, setListChartModal] = useState<DataProps[]>(listChart);
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
@@ -118,6 +190,11 @@ const ModalComponent = ({
     } catch (error) {
       console.log(error);
     }
+  };
+  const handleUpdateStatusHeart = () => {
+    setStatusHeart(!statusHeart);
+    listWatched[indexHeart].watched = !statusHeart;
+    localStorage.setItem("listWatched", JSON.stringify(listWatched));
   };
   return (
     <Modal
@@ -165,8 +242,18 @@ const ModalComponent = ({
           </Radio.Group>
         </div>
         <div className={styles.chart}>
-          <HeartOutlined className={styles.chart__heart} />
-          <HeartFilled className={styles.chart__heart} />
+          {statusHeart ? (
+            <HeartFilled
+              onClick={handleUpdateStatusHeart}
+              className={styles.chart__heart}
+            />
+          ) : (
+            <HeartOutlined
+              onClick={handleUpdateStatusHeart}
+              className={styles.chart__heart}
+            />
+          )}
+
           <PrimaryChart
             data={listChartModal ?? []}
             height={Math.floor(height * 0.4)}
@@ -198,7 +285,10 @@ function App() {
   const queryParam = getQueryParam<any>();
   const [openGeneratedLink, setOpenGeneratedLink] = useState<boolean>(false);
   const [listChart, setListChart] = useState<DataProps[]>([]);
+  const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const local: any = localStorage?.getItem("listWatched");
+  const listWatched: ListWatchedProps[] = local && JSON.parse(local);
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
   );
@@ -256,15 +346,46 @@ function App() {
         updateUrl("coinTo", coinTo);
         updateUrl("range", listKeys[index]);
         updateUrl("id", idCoinFrom);
-        localStorage.setItem(
-          "listWatched",
-          JSON.stringify([
-            {
+        // localStorage.setItem(
+        //   "listWatched",
+        //   JSON.stringify([
+        //     {
+        //       coinFrom,
+        //       coinTo,
+        //       idCoinFrom,
+        //       watched: false,
+        //     },
+        //   ])
+        // );
+        if (listWatched?.length > 0) {
+          console.log(listWatched);
+          console.log(idCoinFrom);
+          const founded = listWatched.every(
+            (el) => `${el.coinFrom}${el.coinTo}` !== `${coinFrom}${coinTo}`
+          );
+          console.log(founded);
+          if (founded) {
+            listWatched.push({
               coinFrom,
               coinTo,
-            },
-          ])
-        );
+              idCoinFrom,
+              watched: false,
+            });
+            localStorage.setItem("listWatched", JSON.stringify(listWatched));
+          }
+        } else {
+          localStorage.setItem(
+            "listWatched",
+            JSON.stringify([
+              {
+                coinFrom,
+                coinTo,
+                idCoinFrom,
+                watched: false,
+              },
+            ])
+          );
+        }
         notify("success", "Generate URL Successfully!", 3000);
       } else {
         notify("warning", "Pair of Coins is not valid!", 3000);
@@ -313,7 +434,19 @@ function App() {
             </Col>
             <Col xs={24} sm={11} md={11} lg={11} xl={11}>
               <div className={styles.container__title__button}>
-                <Button type="primary">My Watchlist</Button>
+                <Button
+                  onClick={() => setOpenWatchList(!openWatchList)}
+                  type="primary"
+                >
+                  My Watchlist
+                </Button>
+                {openWatchList && (
+                  <DrawerComponent
+                    list={listWatched}
+                    setOpen={setOpenWatchList}
+                    open={openWatchList}
+                  />
+                )}
               </div>
             </Col>
           </Row>
@@ -384,7 +517,6 @@ function App() {
                 {openGeneratedLink && (
                   <ModalComponent
                     listChart={listChart}
-                    setOpen={setOpenGeneratedLink}
                     open={openGeneratedLink}
                   />
                 )}
