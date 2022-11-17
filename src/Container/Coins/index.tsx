@@ -95,12 +95,6 @@ const Coins = () => {
     <div className={styles.coins} ref={gridItemRef}>
       {loading && <Loading />}
       <div className={styles.range}>
-        <PageHeader
-          className="site-page-header"
-          onBack={() => navigate("/")}
-          title="Generate chart too"
-          // subTitle="This is a subtitle"
-        />
         <Radio.Group
           onChange={(e) => {
             const { value } = e.target;

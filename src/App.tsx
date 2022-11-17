@@ -98,7 +98,7 @@ const DrawerComponent = ({
       key: "currentPrice",
       render: (_, record) => (
         <p>
-          {`$${(
+          {`${(
             parseFloat(record.priceCoinFrom) / parseFloat(record.priceCoinTo)
           ).toFixed(3)}`}
         </p>
