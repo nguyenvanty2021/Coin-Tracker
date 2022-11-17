@@ -85,7 +85,7 @@ const DrawerComponent = ({
 }) => {
   const columns: ColumnsType<ListWatchedProps> = [
     {
-      title: "Pair of Coins",
+      title: "Pair",
       dataIndex: "pairOfCoins",
       key: "pairOfCoins",
       render: (_, record) => (
@@ -93,16 +93,15 @@ const DrawerComponent = ({
       ),
     },
     {
-      title: "Current Price",
+      title: "Current",
       dataIndex: "currentPrice",
       key: "currentPrice",
       render: (_, record) => (
-        <div>
-          <p>
-            {`1 ${record.coinFrom} = $${record.priceCoinFrom}`.toUpperCase()}
-          </p>
-          <p>{`1 ${record.coinTo} = $${record.priceCoinTo}`.toUpperCase()}</p>
-        </div>
+        <p>
+          {`$${(
+            parseFloat(record.priceCoinFrom) / parseFloat(record.priceCoinTo)
+          ).toFixed(3)}`}
+        </p>
       ),
     },
     {
@@ -271,10 +270,10 @@ function App() {
           res.data.forEach((values: any) => {
             if (values.symbol === result[0].toLowerCase()) {
               idCoinFrom = values.id;
-              priceCoinFrom = numeral(values.current_price).format("0,0.00");
+              priceCoinFrom = numeral(values.current_price).format("0.0.00");
             }
             if (values.symbol === result[1].toLowerCase()) {
-              priceCoinTo = numeral(values.current_price).format("0,0.00");
+              priceCoinTo = numeral(values.current_price).format("0.0.00");
             }
           });
         await handleGetAllCoin(

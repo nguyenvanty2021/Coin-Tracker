@@ -159,7 +159,7 @@ const Coins = () => {
               }}
             />
           </div>
-          <SecondaryChart
+          {/* <SecondaryChart
             data={listChartModal}
             height={Math.floor(height * 0.1)}
             width={boxWidth}
@@ -169,7 +169,7 @@ const Coins = () => {
               bottom: 24,
               left: 48,
             }}
-          />
+          /> */}
         </>
       )}
     </div>
