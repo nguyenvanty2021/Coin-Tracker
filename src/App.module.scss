@@ -35,21 +35,3 @@
     }
   }
 }
-.range {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-.chart {
-  position: relative;
-  &__heart {
-    position: absolute;
-    color: red !important;
-    cursor: pointer;
-    z-index: 1000;
-    top: 0;
-    right: 0;
-    margin: 30px 10px 0 0;
-    font-size: 1.75rem;
-  }
-}

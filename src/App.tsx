@@ -1,21 +1,20 @@
-import { Button, Col, Modal, Row, Radio, Drawer, Table } from "antd";
+import { Button, Col, Row, Drawer, Table } from "antd";
 import styles from "./App.module.scss";
 import InputComponent from "./Components/Input/index";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { Link } from "react-router-dom";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import * as yup from "yup";
+import numeral from "numeral";
+import { useNavigate } from "react-router-dom";
 import SelectComponent from "./Components/Select";
 import { Status, TimeFilters } from "./Constants/enum";
 import { deleteUrl, getQueryParam, updateUrl } from "./Utils/query";
 import coinApi from "./Api/coinApi";
 import { notify } from "./Utils/notification";
 import Loading from "./Components/Loading";
-import { useEffect, useRef, useState } from "react";
-import PrimaryChart from "./Components/PrimaryChart";
-import useWindowDimensions from "./hooks/useWindowDimensions";
+import { useState } from "react";
 import { DataProps } from "./Components/PrimaryChart/interfaces";
-import SecondaryChart from "./Components/SecondaryChart";
-import { HeartFilled, HeartOutlined } from "@ant-design/icons";
 import { ColumnsType } from "antd/lib/table";
 interface FormProps<T> {
   pairOfCoin: T;
@@ -31,15 +30,10 @@ interface ListWatchedProps {
   coinTo: string;
   idCoinFrom: string;
   watched: boolean;
+  priceCoinFrom: string;
+  priceCoinTo: string;
 }
-interface DataType {
-  key: string;
-  name: string;
-  age: number;
-  address: string;
-  tags: string[];
-}
-const TimePeriod: {
+export const TimePeriod: {
   [key: string]: TimeFilters;
 } = {
   "1D": TimeFilters.P1D,
@@ -49,7 +43,7 @@ const TimePeriod: {
   "1Y": TimeFilters.P1Y,
   ALL: TimeFilters.ALL,
 };
-const listTimeRange: TimeRangeProps<string>[] = [
+export const listTimeRange: TimeRangeProps<string>[] = [
   {
     id: "1",
     key: "1D",
@@ -103,11 +97,29 @@ const DrawerComponent = ({
       title: "Current Price",
       dataIndex: "currentPrice",
       key: "currentPrice",
+      render: (_, record) => (
+        <div>
+          <p>
+            {`1 ${record.coinFrom} = $${record.priceCoinFrom}`.toUpperCase()}
+          </p>
+          <p>{`1 ${record.coinTo} = $${record.priceCoinTo}`.toUpperCase()}</p>
+        </div>
+      ),
     },
     {
       title: "Link",
       dataIndex: "link",
       key: "link",
+      render: (_, record) => (
+        <Link
+          to={{
+            pathname: `/coins/${record.coinFrom}/${record.coinTo}`,
+            search: `?coinFrom=${record.coinFrom}&coinTo=${record.coinTo}&id=${record.idCoinFrom}&range=1D`,
+          }}
+        >
+          Link
+        </Link>
+      ),
     },
   ];
   return (
@@ -126,164 +138,8 @@ const DrawerComponent = ({
     </Drawer>
   );
 };
-const ModalComponent = ({
-  open,
-  listChart,
-}: {
-  open: boolean;
-  listChart: DataProps[];
-}) => {
-  const queryParam = getQueryParam<any>();
-  const local: any = localStorage?.getItem("listWatched");
-  const listWatched: {
-    coinFrom: string;
-    coinTo: string;
-    idCoinFrom: string;
-    watched: boolean;
-  }[] = local && JSON.parse(local);
-  const indexHeart = listWatched.findIndex(
-    (values) =>
-      `${values.coinFrom}${values.coinTo}` ===
-      `${queryParam["coinFrom"]}${queryParam["coinTo"]}`
-  );
-  const [statusHeart, setStatusHeart] = useState<boolean>(
-    indexHeart > -1 ? listWatched[indexHeart].watched : false
-  );
-  const [listChartModal, setListChartModal] = useState<DataProps[]>(listChart);
-  const indexRange = Object.keys(TimePeriod).findIndex(
-    (values) => values === queryParam["range"]
-  );
-  const gridItemRef = useRef<HTMLDivElement>(null);
-  const [boxWidth, setBoxWidth] = useState<number>(0);
-  const { height } = useWindowDimensions();
-  useEffect(() => {
-    const handleResize = (width?: number) => {
-      setBoxWidth(width || 0);
-    };
-    handleResize(gridItemRef.current?.clientWidth || 0);
-    window.addEventListener("resize", () =>
-      handleResize(gridItemRef?.current?.clientWidth || 0)
-    );
-    return () => {
-      window.removeEventListener("resize", () => handleResize());
-    };
-  }, [gridItemRef]);
-  const handleGetAllCoin = async (value: string) => {
-    try {
-      const res = await coinApi.getAllCoin(
-        queryParam["id"],
-        queryParam["coinTo"],
-        value
-      );
-      if (res.status === Status.SUCCESS) {
-        const result =
-          res?.data?.prices?.length > 0
-            ? res.data.prices.map((values: number[]) => {
-                return {
-                  date: new Date(values[0]),
-                  price: values[1],
-                };
-              })
-            : [];
-        setListChartModal([...result]);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const handleUpdateStatusHeart = () => {
-    setStatusHeart(!statusHeart);
-    listWatched[indexHeart].watched = !statusHeart;
-    localStorage.setItem("listWatched", JSON.stringify(listWatched));
-  };
-  return (
-    <Modal
-      width="100%"
-      bodyStyle={{ height: 600 }}
-      title={`${queryParam["coinFrom"].toUpperCase()} to ${queryParam[
-        "coinTo"
-      ].toUpperCase()} Price Chart`}
-      centered
-      visible={open}
-      onOk={() => {
-        window.location.reload();
-      }}
-      onCancel={() => {
-        window.location.reload();
-      }}
-    >
-      <div ref={gridItemRef}>
-        <div className={styles.range}>
-          <Radio.Group
-            onChange={(e) => {
-              const { value } = e.target;
-              const indexRange = Object.values(TimePeriod).findIndex(
-                (values) => values === value
-              );
-              updateUrl(
-                "range",
-                indexRange > -1 ? Object.keys(TimePeriod)[indexRange] : "1D"
-              );
-              handleGetAllCoin(value);
-            }}
-            defaultValue={
-              indexRange > -1 ? Object.values(TimePeriod)[indexRange] : "1"
-            }
-            buttonStyle="solid"
-          >
-            {listTimeRange?.length > 0 &&
-              listTimeRange.map((values) => {
-                return (
-                  <Radio.Button key={values.id} value={values.value}>
-                    {values.key}
-                  </Radio.Button>
-                );
-              })}
-          </Radio.Group>
-        </div>
-        <div className={styles.chart}>
-          {statusHeart ? (
-            <HeartFilled
-              onClick={handleUpdateStatusHeart}
-              className={styles.chart__heart}
-            />
-          ) : (
-            <HeartOutlined
-              onClick={handleUpdateStatusHeart}
-              className={styles.chart__heart}
-            />
-          )}
-
-          <PrimaryChart
-            data={listChartModal ?? []}
-            height={Math.floor(height * 0.4)}
-            width={boxWidth}
-            margin={{
-              top: 16,
-              right: 16,
-              bottom: 40,
-              left: 48,
-            }}
-          />
-        </div>
-        <SecondaryChart
-          data={listChartModal ?? []}
-          height={Math.floor(height * 0.1)}
-          width={boxWidth}
-          margin={{
-            top: 0,
-            right: 16,
-            bottom: 24,
-            left: 48,
-          }}
-        />
-      </div>
-    </Modal>
-  );
-};
 function App() {
   const queryParam = getQueryParam<any>();
-  const [openGeneratedLink, setOpenGeneratedLink] = useState<boolean>(false);
   const [listChart, setListChart] = useState<DataProps[]>([]);
   const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -318,7 +174,9 @@ function App() {
   const handleGetAllCoin = async (
     result: string[],
     idCoinFrom: string,
-    timeRange: string
+    timeRange: string,
+    priceCoinFrom: string,
+    priceCoinTo: string
   ) => {
     const listKeys = Object.keys(TimePeriod);
     const coinFrom = result[0].toLowerCase();
@@ -358,18 +216,17 @@ function App() {
         //   ])
         // );
         if (listWatched?.length > 0) {
-          console.log(listWatched);
-          console.log(idCoinFrom);
           const founded = listWatched.every(
             (el) => `${el.coinFrom}${el.coinTo}` !== `${coinFrom}${coinTo}`
           );
-          console.log(founded);
           if (founded) {
             listWatched.push({
               coinFrom,
               coinTo,
               idCoinFrom,
               watched: false,
+              priceCoinFrom,
+              priceCoinTo,
             });
             localStorage.setItem("listWatched", JSON.stringify(listWatched));
           }
@@ -382,6 +239,8 @@ function App() {
                 coinTo,
                 idCoinFrom,
                 watched: false,
+                priceCoinFrom,
+                priceCoinTo,
               },
             ])
           );
@@ -407,13 +266,25 @@ function App() {
       if (res.status === Status.SUCCESS) {
         const result = object.pairOfCoin.split("/");
         let idCoinFrom = "";
+        let priceCoinFrom = "";
+        let priceCoinTo = "";
         res?.data?.length > 0 &&
           res.data.forEach((values: any) => {
             if (values.symbol === result[0].toLowerCase()) {
               idCoinFrom = values.id;
+              priceCoinFrom = numeral(values.current_price).format("0,0.00");
+            }
+            if (values.symbol === result[1].toLowerCase()) {
+              priceCoinTo = numeral(values.current_price).format("0,0.00");
             }
           });
-        await handleGetAllCoin(result, idCoinFrom, object.timeRange);
+        await handleGetAllCoin(
+          result,
+          idCoinFrom,
+          object.timeRange,
+          priceCoinFrom,
+          priceCoinTo
+        );
       }
     } catch (error) {
       console.log(error);
@@ -507,18 +378,25 @@ function App() {
                   </button>
                 </div>
                 {listChart?.length > 0 && (
-                  <Button
-                    onClick={() => setOpenGeneratedLink(!openGeneratedLink)}
-                    type="link"
+                  // <Button
+                  //   // onClick={() => {
+                  //   //   history.push({
+                  //   //     pathname: `/coins/${queryParam["coinFrom"]}/${queryParam["coinTo"]}`,
+                  //   //     search: queryParam,
+                  //   //   });
+                  //   // }}
+                  //   type="link"
+                  // >
+                  //   Generated Link
+                  // </Button>
+                  <Link
+                    to={{
+                      pathname: `/coins/${queryParam["coinFrom"]}/${queryParam["coinTo"]}`,
+                      search: `?coinFrom=${queryParam["coinFrom"]}&coinTo=${queryParam["coinTo"]}&id=${queryParam["id"]}&range=${queryParam["range"]}`,
+                    }}
                   >
                     Generated Link
-                  </Button>
-                )}
-                {openGeneratedLink && (
-                  <ModalComponent
-                    listChart={listChart}
-                    open={openGeneratedLink}
-                  />
+                  </Link>
                 )}
               </Row>
             </Col>
@@ -528,5 +406,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

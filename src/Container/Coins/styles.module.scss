@@ -1,0 +1,21 @@
+.range {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chart {
+  position: relative;
+  &__heart {
+    position: absolute;
+    color: red !important;
+    cursor: pointer;
+    z-index: 1000;
+    top: 0;
+    right: 0;
+    margin: 10px 10px 0 0;
+    font-size: 1.75rem;
+  }
+}
+.coins {
+  margin: 20px;
+}
