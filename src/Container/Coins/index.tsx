@@ -128,24 +128,25 @@ const Coins = () => {
             })}
         </Radio.Group>
       </div>
-      <h3>{`${queryParam["coinFrom"].toUpperCase()} to ${queryParam[
-        "coinTo"
-      ].toUpperCase()} Price Chart`}</h3>
+      <div className={styles.coins__title}>
+        <h3>{`${queryParam["coinFrom"].toUpperCase()} to ${queryParam[
+          "coinTo"
+        ].toUpperCase()} Price Chart`}</h3>
+        {statusHeart ? (
+          <HeartFilled
+            onClick={handleUpdateStatusHeart}
+            className={styles.chart__heart}
+          />
+        ) : (
+          <HeartOutlined
+            onClick={handleUpdateStatusHeart}
+            className={styles.chart__heart}
+          />
+        )}
+      </div>
       {listChartModal?.length > 0 && (
         <>
           <div className={styles.chart}>
-            {statusHeart ? (
-              <HeartFilled
-                onClick={handleUpdateStatusHeart}
-                className={styles.chart__heart}
-              />
-            ) : (
-              <HeartOutlined
-                onClick={handleUpdateStatusHeart}
-                className={styles.chart__heart}
-              />
-            )}
-
             <PrimaryChart
               data={listChartModal}
               height={Math.floor(height * 0.4)}
