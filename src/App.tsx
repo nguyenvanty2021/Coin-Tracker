@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import * as yup from "yup";
 import numeral from "numeral";
-import { useNavigate } from "react-router-dom";
 import SelectComponent from "./Components/Select";
 import { Status, TimeFilters } from "./Constants/enum";
 import { deleteUrl, getQueryParam, updateUrl } from "./Utils/query";
@@ -133,7 +132,7 @@ const DrawerComponent = ({
       <Table
         columns={columns}
         bordered
-        dataSource={list.filter((v) => v.watched)}
+        dataSource={list?.length > 0 ? list.filter((v) => v.watched) : []}
       />
     </Drawer>
   );
