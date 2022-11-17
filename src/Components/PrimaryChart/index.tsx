@@ -20,7 +20,7 @@ export const handleFormatCoin = (coin: number) => {
     ? "0,0.000"
     : coin < 10
     ? "0,0.00"
-    : "0,0";
+    : "0,0.0";
 };
 // accessors
 const getDate = (d: DataProps) => new Date(d.date);
@@ -107,7 +107,9 @@ const PrimaryChart: React.FC<PrimaryChartProps> = ({
           yScale={priceScale}
           stroke="#26619C"
           xTickFormat={(d) => {
-            return numeral(d).format(d <= 100 ? "$0.00" : "$0,0");
+            return numeral(d).format(
+              d <= 100 ? `$${handleFormatCoin(d)}` : "$0,0"
+            );
           }}
         />
         {/* a transparent ele that track the pointer event, allow us to display tooltup */}
