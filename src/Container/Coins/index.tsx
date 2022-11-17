@@ -22,11 +22,14 @@ const Coins = () => {
     idCoinFrom: string;
     watched: boolean;
   }[] = local && JSON.parse(local);
-  const indexHeart = listWatched.findIndex(
-    (values) =>
-      `${values.coinFrom}${values.coinTo}` ===
-      `${queryParam["coinFrom"]}${queryParam["coinTo"]}`
-  );
+  const indexHeart =
+    listWatched?.length > 0
+      ? listWatched.findIndex(
+          (values) =>
+            `${values.coinFrom}${values.coinTo}` ===
+            `${queryParam["coinFrom"]}${queryParam["coinTo"]}`
+        )
+      : -1;
   const [statusHeart, setStatusHeart] = useState<boolean>(
     indexHeart > -1 ? listWatched[indexHeart].watched : false
   );
