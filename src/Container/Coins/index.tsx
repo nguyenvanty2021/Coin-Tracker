@@ -130,6 +130,7 @@ const Coins = () => {
                   "range",
                   indexRange > -1 ? Object.keys(TimePeriod)[indexRange] : "1D"
                 );
+                setLoading(true);
                 handleGetAllCoin(value);
               }}
               defaultValue={
