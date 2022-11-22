@@ -1,5 +1,5 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
-import { Radio } from "antd";
+import { notification, Radio } from "antd";
 import styles from "./styles.module.scss";
 import { useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
@@ -11,7 +11,7 @@ import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { getQueryParam, updateUrl } from "../../Utils/query";
 import Loading from "../../Components/Loading";
 import { useParams } from "react-router-dom";
-
+type NotificationType = "success" | "info" | "warning" | "error";
 const Coins = () => {
   const params = useParams();
   const { from, to } = params;
@@ -23,9 +23,6 @@ const Coins = () => {
     idCoinFrom: string;
     watched: boolean;
   }[] = local && JSON.parse(local);
-  const objectCoin: any =
-    listWatched?.length > 0 &&
-    listWatched.find((v) => `${v.coinFrom}${v.coinTo}` === `${from}${to}`);
   const indexHeart =
     listWatched?.length > 0
       ? listWatched.findIndex(
@@ -40,9 +37,16 @@ const Coins = () => {
     (values) => values === queryParam["range"]
   );
   const gridItemRef = useRef<HTMLDivElement>(null);
+  const [api] = notification.useNotification();
   const [loading, setLoading] = useState<boolean>(false);
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const { height } = useWindowDimensions();
+  const openNotificationWithIcon = (type: NotificationType) => {
+    api[type]({
+      message: "Error",
+      description: "Error",
+    });
+  };
   useEffect(() => {
     const handleResize = (width?: number) => {
       setBoxWidth(width || 0);
@@ -58,25 +62,32 @@ const Coins = () => {
   const handleGetAllCoin = async (value: string) => {
     try {
       setLoading(true);
-      const res = await coinApi.getAllCoin(
-        objectCoin ? objectCoin["idCoinFrom"] : "",
-        to || "",
-        value
-      );
-      if (res.status === Status.SUCCESS) {
-        const result =
-          res?.data?.prices?.length > 0
-            ? res.data.prices.map((values: number[]) => {
-                return {
-                  date: new Date(values[0]),
-                  price: values[1],
-                };
-              })
-            : [];
-        setListChartModal([...result]);
+      const resAllCoin = await coinApi.getAllMarkets();
+      if (resAllCoin.status === Status.SUCCESS) {
+        let coinID = "";
+        (await resAllCoin?.data?.length) > 0 &&
+          resAllCoin.data.forEach((values: any) => {
+            if (values.symbol === from?.toLowerCase()) {
+              coinID = values.id;
+            }
+          });
+        const res = await coinApi.getAllCoin(coinID, to || "", value);
+        if (res.status === Status.SUCCESS) {
+          const result =
+            res?.data?.prices?.length > 0
+              ? res.data.prices.map((values: number[]) => {
+                  return {
+                    date: new Date(values[0]),
+                    price: values[1],
+                  };
+                })
+              : [];
+          setListChartModal([...result]);
+        }
       }
     } catch (error) {
       console.log(error);
+      openNotificationWithIcon("error");
     } finally {
       setTimeout(() => {
         setLoading(false);

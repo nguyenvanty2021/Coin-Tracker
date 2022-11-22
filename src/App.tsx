@@ -84,7 +84,7 @@ const DrawerComponent = ({
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const handleFormatCoin = (coin: number) =>
-    coin < 0.001 ? 4 : coin < 0.01 ? 3 : coin < 10 ? 2 : 0;
+    coin < 0.001 ? 6 : coin < 0.01 ? 5 : coin < 10 ? 4 : 0;
   const columns: ColumnsType<ListWatchedProps> = [
     {
       title: "Pair",

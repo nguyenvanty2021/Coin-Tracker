@@ -15,12 +15,12 @@ import { SC } from "./styled";
 import LineChart from "../LineChart";
 export const handleFormatCoin = (coin: number) => {
   return coin < 0.01
-    ? "0,0.0000"
+    ? "0,0.000000"
     : coin < 0.1
-    ? "0,0.000"
+    ? "0,0.00000"
     : coin < 10
-    ? "0,0.00"
-    : "0,0.0";
+    ? "0,0.0000"
+    : "0,0.000";
 };
 // accessors
 const getDate = (d: DataProps) => new Date(d.date);
