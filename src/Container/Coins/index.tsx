@@ -65,27 +65,18 @@ const Coins = () => {
   const handleGetAllCoin = useCallback(
     debounce(async (value: string) => {
       try {
-        const resAllCoin = await coinApi.getCoinByName(from);
-        if (resAllCoin.status === Status.SUCCESS) {
-          const res = await coinApi.getAllCoin(
-            resAllCoin?.data?.coins?.length > 0
-              ? resAllCoin.data.coins[0]?.id
-              : "",
-            to || "",
-            value
-          );
-          if (res.status === Status.SUCCESS) {
-            const result =
-              res?.data?.prices?.length > 0
-                ? res.data.prices.map((values: number[]) => {
-                    return {
-                      date: new Date(values[0]),
-                      price: values[1],
-                    };
-                  })
-                : [];
-            setListChartModal([...result]);
-          }
+        const res = await coinApi.getAllCoin(from, to || "", value);
+        if (res.status === Status.SUCCESS) {
+          const result =
+            res?.data?.prices?.length > 0
+              ? res.data.prices.map((values: number[]) => {
+                  return {
+                    date: new Date(values[0]),
+                    price: values[1],
+                  };
+                })
+              : [];
+          setListChartModal([...result]);
         }
       } catch (error) {
         console.log(error);

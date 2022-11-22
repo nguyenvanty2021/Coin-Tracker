@@ -143,6 +143,11 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [coin, setCoin] = useState<string>("");
   const local: any = localStorage?.getItem("listWatched");
+  const [idCommon, setIdCommon] = useState<{
+    idCoinFromState: string;
+  }>({
+    idCoinFromState: "",
+  });
   const listWatched: ListWatchedProps[] = local && JSON.parse(local);
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
@@ -278,20 +283,28 @@ function App() {
               priceCoinTo = numeral(values.current_price).format("0.0.00");
             }
           });
-        await handleGetAllCoin(
-          result,
-          idCoinFrom,
-          object.timeRange,
-          priceCoinFrom,
-          priceCoinTo
-        );
+        const [idCoinFromV1]: any = await Promise.all([
+          coinApi.getCoinByName(result[0]),
+          handleGetAllCoin(
+            result,
+            idCoinFrom,
+            object.timeRange,
+            priceCoinFrom,
+            priceCoinTo
+          ),
+        ]);
+        setIdCommon({
+          ...idCommon,
+          idCoinFromState:
+            idCoinFromV1?.data?.coins?.length > 0
+              ? idCoinFromV1.data.coins[0].id
+              : "",
+        });
       }
     } catch (error) {
       console.log(error);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 250);
+      setLoading(false);
     }
   };
   return (
@@ -391,7 +404,7 @@ function App() {
                   // </Button>
                   <Link
                     to={{
-                      pathname: `/coins/${objectCoin["coinFrom"]}/${objectCoin["coinTo"]}`,
+                      pathname: `/coins/${idCommon.idCoinFromState}/${objectCoin["coinTo"]}`,
                       search: `?range=${queryParam["range"]}`,
                     }}
                   >
