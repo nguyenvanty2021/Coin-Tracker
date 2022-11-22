@@ -13,7 +13,6 @@ import coinApi from "./Api/coinApi";
 import { notify } from "./Utils/notification";
 import Loading from "./Components/Loading";
 import { useState } from "react";
-import { DataProps } from "./Components/PrimaryChart/interfaces";
 import { ColumnsType } from "antd/lib/table";
 interface FormProps<T> {
   pairOfCoin: T;
@@ -138,15 +137,16 @@ const DrawerComponent = ({
 };
 function App() {
   const queryParam = getQueryParam<any>();
-  const [listChart, setListChart] = useState<DataProps[]>([]);
   const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [coin, setCoin] = useState<string>("");
   const local: any = localStorage?.getItem("listWatched");
   const [idCommon, setIdCommon] = useState<{
     idCoinFromState: string;
+    countCheckEror: number;
   }>({
     idCoinFromState: "",
+    countCheckEror: 0,
   });
   const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
   const indexRange = Object.keys(TimePeriod).findIndex(
@@ -185,36 +185,32 @@ function App() {
       pairOfCoin: "",
       timeRange: TimePeriod["1D"],
     });
-    setListChart([]);
+    setIdCommon({ ...idCommon, countCheckEror: 0 });
   };
-  const handleGetAllCoin = async (
-    result: string[],
+  const getCoinByName = async (
+    coinName: string,
+    coinToData: string,
     idCoinFrom: string,
     timeRange: string,
     priceCoinFrom: string,
-    priceCoinTo: string
+    priceCoinTo: string,
+    countTemp: number,
+    result: string[]
   ) => {
-    const listKeys = Object.keys(TimePeriod);
-    const coinTo = result[1].toLowerCase();
-    const index = Object.values(TimePeriod).findIndex(
-      (values) => values === timeRange
-    );
     try {
       setLoading(true);
-      const res = await coinApi.getAllCoin(idCoinFrom, coinTo, timeRange);
+      const index = Object.values(TimePeriod).findIndex(
+        (values) => values === timeRange
+      );
+      const res = await coinApi.getCoinByName(coinName);
       if (
         res.status === Status.SUCCESS &&
         result.length === 2 &&
         index > -1 &&
-        res?.data?.prices?.length > 0
+        res?.data?.coins?.length > 0
       ) {
-        const result = res.data.prices.map((values: number[]) => {
-          return {
-            date: new Date(values[0]),
-            price: values[1],
-          };
-        });
-        setListChart(result);
+        const coinTo = coinToData.toLowerCase();
+        const listKeys = Object.keys(TimePeriod);
         setCoin(`${idCoinFrom}${coinTo}`);
         updateUrl("range", listKeys[index]);
         // localStorage.setItem(
@@ -258,10 +254,15 @@ function App() {
             ])
           );
         }
+        setIdCommon({
+          ...idCommon,
+          countCheckEror: countTemp,
+          idCoinFromState: res.data.coins[0].id,
+        });
         notify("success", "Generate URL Successfully!", 1500);
       } else {
         notify("warning", "Pair of Coins is not valid!", 1500);
-        setListChart([]);
+        setIdCommon({ ...idCommon, countCheckEror: 0 });
       }
     } catch (error) {
       notify("warning", "Pair of Coins is not valid!", 1500);
@@ -276,6 +277,7 @@ function App() {
       setLoading(true);
       const res = await coinApi.getAllMarkets();
       if (res.status === Status.SUCCESS) {
+        let countTemp = idCommon.countCheckEror;
         const result = object.pairOfCoin.split("/");
         let idCoinFrom = "";
         let priceCoinFrom = "";
@@ -285,28 +287,23 @@ function App() {
             if (values.symbol === result[0].toLowerCase()) {
               idCoinFrom = values.id;
               priceCoinFrom = numeral(values.current_price).format("0.0.00");
+              countTemp++;
             }
             if (values.symbol === result[1].toLowerCase()) {
               priceCoinTo = numeral(values.current_price).format("0.0.00");
+              countTemp++;
             }
           });
-        const [idCoinFromV1]: any = await Promise.all([
-          coinApi.getCoinByName(result[0]),
-          handleGetAllCoin(
-            result,
-            idCoinFrom,
-            object.timeRange,
-            priceCoinFrom,
-            priceCoinTo
-          ),
-        ]);
-        setIdCommon({
-          ...idCommon,
-          idCoinFromState:
-            idCoinFromV1?.data?.coins?.length > 0
-              ? idCoinFromV1.data.coins[0].id
-              : "",
-        });
+        await getCoinByName(
+          result[0],
+          result[1],
+          idCoinFrom,
+          object?.timeRange || "",
+          priceCoinFrom,
+          priceCoinTo,
+          countTemp,
+          result
+        );
       }
     } catch (error) {
       notify("error", "Error!", 1500);
@@ -382,7 +379,7 @@ function App() {
                     Generate URL
                   </button>
                 </div>
-                {listChart?.length > 0 && (
+                {idCommon.countCheckEror === 2 && (
                   // <Button
                   //   // onClick={() => {
                   //   //   history.push({

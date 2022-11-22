@@ -110,7 +110,7 @@ const Coins = () => {
             );
           }
         } catch (error) {
-          console.log(error);
+          notify("error", "Error!", 1500);
         }
       }
     }, 500),
