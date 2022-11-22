@@ -24,7 +24,7 @@ export interface TimeRangeProps<T> {
   value: T;
   key: T;
 }
-interface ListWatchedProps {
+export interface ListWatchedProps {
   coinFrom: string;
   coinTo: string;
   idCoinFrom: string;
@@ -148,7 +148,7 @@ function App() {
   }>({
     idCoinFromState: "",
   });
-  const listWatched: ListWatchedProps[] = local && JSON.parse(local);
+  const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
   );

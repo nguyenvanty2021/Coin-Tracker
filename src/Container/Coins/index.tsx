@@ -3,7 +3,7 @@ import { Radio } from "antd";
 import styles from "./styles.module.scss";
 import { useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
-import { listTimeRange, TimePeriod } from "../../App";
+import { listTimeRange, ListWatchedProps, TimePeriod } from "../../App";
 import PrimaryChart from "../../Components/PrimaryChart";
 import { DataProps } from "../../Components/PrimaryChart/interfaces";
 import { Status } from "../../Constants/enum";
@@ -12,6 +12,7 @@ import { getQueryParam, updateUrl } from "../../Utils/query";
 import Loading from "../../Components/Loading";
 import { useParams } from "react-router-dom";
 import { notify } from "../../Utils/notification";
+import numeral from "numeral";
 function debounce(fn: any, wait?: number) {
   let timerId: any, lastArguments: any, lastThis: any;
   return (...args: any) => {
@@ -30,12 +31,7 @@ const Coins = () => {
   const { from, to }: any = params;
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
-  const listWatched: {
-    coinFrom: string;
-    coinTo: string;
-    idCoinFrom: string;
-    watched: boolean;
-  }[] = local && JSON.parse(local);
+  const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
   const indexHeart =
     listWatched?.length > 0
       ? listWatched.findIndex(
@@ -80,6 +76,46 @@ const Coins = () => {
     }, 500),
     []
   );
+  const handleSetLocalStorage = useCallback(
+    debounce(async () => {
+      if (listWatched?.length === 0) {
+        try {
+          const res = await coinApi.getAllMarkets();
+          if (res.status === Status.SUCCESS) {
+            let priceCoinFrom = "";
+            let priceCoinTo = "";
+            res?.data?.length > 0 &&
+              res.data.forEach((values: any) => {
+                if (values.id === from) {
+                  priceCoinFrom = numeral(values.current_price).format(
+                    "0.0.00"
+                  );
+                }
+                if (values.symbol === to.toLowerCase()) {
+                  priceCoinTo = numeral(values.current_price).format("0.0.00");
+                }
+              });
+            localStorage.setItem(
+              "listWatched",
+              JSON.stringify([
+                {
+                  coinFrom: from,
+                  coinTo: to,
+                  idCoinFrom: from,
+                  watched: false,
+                  priceCoinFrom: priceCoinFrom,
+                  priceCoinTo: priceCoinTo,
+                },
+              ])
+            );
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }, 500),
+    []
+  );
   const handleUpdateStatusHeart = () => {
     setStatusHeart(!statusHeart);
     listWatched[indexHeart].watched = !statusHeart;
@@ -91,6 +127,7 @@ const Coins = () => {
     );
     setLoading(true);
     handleGetAllCoin(Object.values(TimePeriod)[indexRange]);
+    handleSetLocalStorage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
