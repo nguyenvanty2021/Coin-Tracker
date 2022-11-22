@@ -1,5 +1,5 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
-import { notification, Radio } from "antd";
+import { Radio } from "antd";
 import styles from "./styles.module.scss";
 import { useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
@@ -11,6 +11,7 @@ import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { getQueryParam, updateUrl } from "../../Utils/query";
 import Loading from "../../Components/Loading";
 import { useParams } from "react-router-dom";
+import { notify } from "../../Utils/notification";
 function debounce(fn: any, wait?: number) {
   let timerId: any, lastArguments: any, lastThis: any;
   return (...args: any) => {
@@ -24,8 +25,6 @@ function debounce(fn: any, wait?: number) {
     }, wait || 400);
   };
 }
-
-type NotificationType = "success" | "info" | "warning" | "error";
 const Coins = () => {
   const params = useParams();
   const { from, to }: any = params;
@@ -51,16 +50,9 @@ const Coins = () => {
     (values) => values === queryParam["range"]
   );
   const gridItemRef = useRef<HTMLDivElement>(null);
-  const [api] = notification.useNotification();
   const [loading, setLoading] = useState<boolean>(false);
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const { height } = useWindowDimensions();
-  const openNotificationWithIcon = (type: NotificationType) => {
-    api[type]({
-      message: "Error",
-      description: "Error",
-    });
-  };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleGetAllCoin = useCallback(
     debounce(async (value: string) => {
@@ -79,8 +71,7 @@ const Coins = () => {
           setListChartModal([...result]);
         }
       } catch (error) {
-        console.log(error);
-        openNotificationWithIcon("error");
+        notify("error", "Error!", 1500);
       } finally {
         setTimeout(() => {
           setLoading(false);

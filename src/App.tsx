@@ -178,6 +178,15 @@ function App() {
     defaultValues: defaultValues,
     resolver: yupResolver(yupSchemaFindNewCV),
   });
+  const handleReset = () => {
+    deleteUrl("range");
+    methods.reset({
+      ...defaultValues,
+      pairOfCoin: "",
+      timeRange: TimePeriod["1D"],
+    });
+    setListChart([]);
+  };
   const handleGetAllCoin = async (
     result: string[],
     idCoinFrom: string,
@@ -186,7 +195,6 @@ function App() {
     priceCoinTo: string
   ) => {
     const listKeys = Object.keys(TimePeriod);
-    const coinFrom = result[0].toLowerCase();
     const coinTo = result[1].toLowerCase();
     const index = Object.values(TimePeriod).findIndex(
       (values) => values === timeRange
@@ -207,7 +215,7 @@ function App() {
           };
         });
         setListChart(result);
-        setCoin(`${coinFrom}${coinTo}`);
+        setCoin(`${idCoinFrom}${coinTo}`);
         updateUrl("range", listKeys[index]);
         // localStorage.setItem(
         //   "listWatched",
@@ -222,11 +230,11 @@ function App() {
         // );
         if (listWatched?.length > 0) {
           const founded = listWatched.every(
-            (el) => `${el.coinFrom}${el.coinTo}` !== `${coinFrom}${coinTo}`
+            (el) => `${el.coinFrom}${el.coinTo}` !== `${idCoinFrom}${coinTo}`
           );
           if (founded) {
             listWatched.push({
-              coinFrom,
+              coinFrom: idCoinFrom,
               coinTo,
               idCoinFrom,
               watched: false,
@@ -240,7 +248,7 @@ function App() {
             "listWatched",
             JSON.stringify([
               {
-                coinFrom,
+                coinFrom: idCoinFrom,
                 coinTo,
                 idCoinFrom,
                 watched: false,
@@ -250,16 +258,15 @@ function App() {
             ])
           );
         }
-        notify("success", "Generate URL Successfully!", 2000);
+        notify("success", "Generate URL Successfully!", 1500);
       } else {
-        notify("warning", "Pair of Coins is not valid!", 2000);
+        notify("warning", "Pair of Coins is not valid!", 1500);
+        setListChart([]);
       }
     } catch (error) {
-      notify("warning", "Pair of Coins is not valid!", 2000);
+      notify("warning", "Pair of Coins is not valid!", 1500);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 250);
+      setLoading(false);
     }
   };
   const onSubmit: SubmitHandler<FormProps<string>> = async (
@@ -302,7 +309,7 @@ function App() {
         });
       }
     } catch (error) {
-      console.log(error);
+      notify("error", "Error!", 1500);
     } finally {
       setLoading(false);
     }
@@ -363,22 +370,7 @@ function App() {
             <Col xs={24} sm={22} md={22} lg={22} xl={22}>
               <Row className={styles.container__item__submit}>
                 <div>
-                  <Button
-                    onClick={() => {
-                      deleteUrl("coinFrom");
-                      deleteUrl("coinTo");
-                      deleteUrl("range");
-                      deleteUrl("id");
-                      methods.reset({
-                        ...defaultValues,
-                        pairOfCoin: "",
-                        timeRange: TimePeriod["1D"],
-                      });
-                      setListChart([]);
-                    }}
-                    type="primary"
-                    danger
-                  >
+                  <Button onClick={handleReset} type="primary" danger>
                     Reset
                   </Button>
                 </div>
