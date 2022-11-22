@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
 import { notification, Radio } from "antd";
 import styles from "./styles.module.scss";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
 import { listTimeRange, TimePeriod } from "../../App";
 import PrimaryChart from "../../Components/PrimaryChart";
@@ -11,10 +11,24 @@ import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { getQueryParam, updateUrl } from "../../Utils/query";
 import Loading from "../../Components/Loading";
 import { useParams } from "react-router-dom";
+function debounce(fn: any, wait?: number) {
+  let timerId: any, lastArguments: any, lastThis: any;
+  return (...args: any) => {
+    timerId && clearTimeout(timerId);
+    lastArguments = args;
+    //@ts-ignore
+    lastThis = this;
+    timerId = setTimeout(function () {
+      fn.apply(lastThis, lastArguments);
+      timerId = null;
+    }, wait || 400);
+  };
+}
+
 type NotificationType = "success" | "info" | "warning" | "error";
 const Coins = () => {
   const params = useParams();
-  const { from, to } = params;
+  const { from, to }: any = params;
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
   const listWatched: {
@@ -47,6 +61,56 @@ const Coins = () => {
       description: "Error",
     });
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleGetAllCoin = useCallback(
+    debounce(async (value: string) => {
+      try {
+        const resAllCoin = await coinApi.getCoinByName(from);
+        if (resAllCoin.status === Status.SUCCESS) {
+          const res = await coinApi.getAllCoin(
+            resAllCoin?.data?.coins?.length > 0
+              ? resAllCoin.data.coins[0]?.id
+              : "",
+            to || "",
+            value
+          );
+          if (res.status === Status.SUCCESS) {
+            const result =
+              res?.data?.prices?.length > 0
+                ? res.data.prices.map((values: number[]) => {
+                    return {
+                      date: new Date(values[0]),
+                      price: values[1],
+                    };
+                  })
+                : [];
+            setListChartModal([...result]);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+        openNotificationWithIcon("error");
+      } finally {
+        setTimeout(() => {
+          setLoading(false);
+        }, 250);
+      }
+    }, 500),
+    []
+  );
+  const handleUpdateStatusHeart = () => {
+    setStatusHeart(!statusHeart);
+    listWatched[indexHeart].watched = !statusHeart;
+    localStorage.setItem("listWatched", JSON.stringify(listWatched));
+  };
+  useEffect(() => {
+    const indexRange = Object.keys(TimePeriod).findIndex(
+      (values) => values === queryParam["range"]
+    );
+    setLoading(true);
+    handleGetAllCoin(Object.values(TimePeriod)[indexRange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const handleResize = (width?: number) => {
       setBoxWidth(width || 0);
@@ -59,104 +123,57 @@ const Coins = () => {
       window.removeEventListener("resize", () => handleResize());
     };
   }, [gridItemRef]);
-  const handleGetAllCoin = async (value: string) => {
-    try {
-      setLoading(true);
-      const resAllCoin = await coinApi.getAllMarkets();
-      if (resAllCoin.status === Status.SUCCESS) {
-        let coinID = "";
-        (await resAllCoin?.data?.length) > 0 &&
-          resAllCoin.data.forEach((values: any) => {
-            if (values.symbol === from?.toLowerCase()) {
-              coinID = values.id;
-            }
-          });
-        const res = await coinApi.getAllCoin(coinID, to || "", value);
-        if (res.status === Status.SUCCESS) {
-          const result =
-            res?.data?.prices?.length > 0
-              ? res.data.prices.map((values: number[]) => {
-                  return {
-                    date: new Date(values[0]),
-                    price: values[1],
-                  };
-                })
-              : [];
-          setListChartModal([...result]);
-        }
-      }
-    } catch (error) {
-      console.log(error);
-      openNotificationWithIcon("error");
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 250);
-    }
-  };
-  const handleUpdateStatusHeart = () => {
-    setStatusHeart(!statusHeart);
-    listWatched[indexHeart].watched = !statusHeart;
-    localStorage.setItem("listWatched", JSON.stringify(listWatched));
-  };
-  useEffect(() => {
-    const indexRange = Object.keys(TimePeriod).findIndex(
-      (values) => values === queryParam["range"]
-    );
-    handleGetAllCoin(Object.values(TimePeriod)[indexRange]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   return (
     <div className={styles.coins} ref={gridItemRef}>
       {loading && <Loading />}
-      <div className={styles.range}>
-        <Radio.Group
-          onChange={(e) => {
-            const { value } = e.target;
-            const indexRange = Object.values(TimePeriod).findIndex(
-              (values) => values === value
-            );
-            updateUrl(
-              "range",
-              indexRange > -1 ? Object.keys(TimePeriod)[indexRange] : "1D"
-            );
-            handleGetAllCoin(value);
-          }}
-          defaultValue={
-            indexRange > -1 ? Object.values(TimePeriod)[indexRange] : "1"
-          }
-          buttonStyle="solid"
-        >
-          {listTimeRange?.length > 0 &&
-            listTimeRange.map((values) => {
-              return (
-                <Radio.Button key={values.id} value={values.value}>
-                  {values.key}
-                </Radio.Button>
-              );
-            })}
-        </Radio.Group>
-      </div>
-      <div className={styles.coins__title}>
-        <h3>
-          {from &&
-            to &&
-            `${from.toUpperCase()} to ${to.toUpperCase()} Price Chart`}
-        </h3>
-        {statusHeart ? (
-          <HeartFilled
-            onClick={handleUpdateStatusHeart}
-            className={styles.chart__heart}
-          />
-        ) : (
-          <HeartOutlined
-            onClick={handleUpdateStatusHeart}
-            className={styles.chart__heart}
-          />
-        )}
-      </div>
       {listChartModal?.length > 0 && (
         <>
+          <div className={styles.range}>
+            <Radio.Group
+              onChange={(e) => {
+                const { value } = e.target;
+                const indexRange = Object.values(TimePeriod).findIndex(
+                  (values) => values === value
+                );
+                updateUrl(
+                  "range",
+                  indexRange > -1 ? Object.keys(TimePeriod)[indexRange] : "1D"
+                );
+                handleGetAllCoin(value);
+              }}
+              defaultValue={
+                indexRange > -1 ? Object.values(TimePeriod)[indexRange] : "1"
+              }
+              buttonStyle="solid"
+            >
+              {listTimeRange?.length > 0 &&
+                listTimeRange.map((values) => {
+                  return (
+                    <Radio.Button key={values.id} value={values.value}>
+                      {values.key}
+                    </Radio.Button>
+                  );
+                })}
+            </Radio.Group>
+          </div>
+          <div className={styles.coins__title}>
+            <h3>
+              {from &&
+                to &&
+                `${from.toUpperCase()} to ${to.toUpperCase()} Price Chart`}
+            </h3>
+            {statusHeart ? (
+              <HeartFilled
+                onClick={handleUpdateStatusHeart}
+                className={styles.chart__heart}
+              />
+            ) : (
+              <HeartOutlined
+                onClick={handleUpdateStatusHeart}
+                className={styles.chart__heart}
+              />
+            )}
+          </div>
           <div className={styles.chart}>
             <PrimaryChart
               data={listChartModal}
@@ -170,17 +187,6 @@ const Coins = () => {
               }}
             />
           </div>
-          {/* <SecondaryChart
-            data={listChartModal}
-            height={Math.floor(height * 0.1)}
-            width={boxWidth}
-            margin={{
-              top: 0,
-              right: 16,
-              bottom: 24,
-              left: 48,
-            }}
-          /> */}
         </>
       )}
     </div>
