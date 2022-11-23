@@ -126,7 +126,6 @@ const Coins = () => {
   const handleCheckCoin = useCallback(
     debounce(async () => {
       try {
-        setLoading(true);
         const listRespon = await Promise.all([
           coinApi.getCoinByName(from.toLowerCase()),
           coinApi.getCoinByName(to.toLowerCase()),
@@ -156,6 +155,7 @@ const Coins = () => {
   );
 
   useEffect(() => {
+    setLoading(true);
     handleCheckCoin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
