@@ -141,13 +141,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [coin, setCoin] = useState<string>("");
   const local: any = localStorage?.getItem("listWatched");
-  const [idCommon, setIdCommon] = useState<{
-    idCoinFromState: string;
-    countCheckEror: number;
-  }>({
-    idCoinFromState: "",
-    countCheckEror: 0,
-  });
+  const [listCheck, setListCheck] = useState<any>([]);
   const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
@@ -185,91 +179,88 @@ function App() {
       pairOfCoin: "",
       timeRange: TimePeriod["1D"],
     });
-    setIdCommon({ ...idCommon, countCheckEror: 0 });
+    setListCheck([]);
   };
-  const getCoinByName = async (
-    coinName: string,
-    coinToData: string,
-    idCoinFrom: string,
-    timeRange: string,
-    priceCoinFrom: string,
-    priceCoinTo: string,
-    countTemp: number,
-    result: string[]
-  ) => {
-    try {
-      setLoading(true);
-      const index = Object.values(TimePeriod).findIndex(
-        (values) => values === timeRange
-      );
-      const res = await coinApi.getCoinByName(coinName);
-      if (
-        res.status === Status.SUCCESS &&
-        result.length === 2 &&
-        index > -1 &&
-        res?.data?.coins?.length > 0
-      ) {
-        const coinTo = coinToData.toLowerCase();
-        const listKeys = Object.keys(TimePeriod);
-        setCoin(`${idCoinFrom}${coinTo}`);
-        updateUrl("range", listKeys[index]);
-        // localStorage.setItem(
-        //   "listWatched",
-        //   JSON.stringify([
-        //     {
-        //       coinFrom,
-        //       coinTo,
-        //       idCoinFrom,
-        //       watched: false,
-        //     },
-        //   ])
-        // );
-        if (listWatched?.length > 0) {
-          const founded = listWatched.every(
-            (el) => `${el.coinFrom}${el.coinTo}` !== `${idCoinFrom}${coinTo}`
-          );
-          if (founded) {
-            listWatched.push({
-              coinFrom: idCoinFrom,
-              coinTo,
-              idCoinFrom,
-              watched: false,
-              priceCoinFrom,
-              priceCoinTo,
-            });
-            localStorage.setItem("listWatched", JSON.stringify(listWatched));
-          }
-        } else {
-          localStorage.setItem(
-            "listWatched",
-            JSON.stringify([
-              {
-                coinFrom: idCoinFrom,
-                coinTo,
-                idCoinFrom,
-                watched: false,
-                priceCoinFrom,
-                priceCoinTo,
-              },
-            ])
-          );
-        }
-        setIdCommon({
-          ...idCommon,
-          countCheckEror: countTemp,
-          idCoinFromState: res.data.coins[0].id,
-        });
-        notify("success", "Generate URL Successfully!", 1500);
-      } else {
-        notify("warning", "Pair of Coins is not valid!", 1500);
-        setIdCommon({ ...idCommon, countCheckEror: 0 });
-      }
-    } catch (error) {
-      notify("warning", "Pair of Coins is not valid!", 1500);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const getCoinByName = async (
+  //   coinName: string,
+  //   coinToData: string,
+  //   idCoinFrom: string,
+  //   timeRange: string,
+  //   priceCoinFrom: string,
+  //   priceCoinTo: string,
+  //   countTemp: number,
+  //   result: string[]
+  // ) => {
+  //   try {
+  //     setLoading(true);
+  //     const res = await coinApi.getCoinByName(coinName);
+  //     if (
+  //       res.status === Status.SUCCESS &&
+  //       result.length === 2 &&
+  //       index > -1 &&
+  //       res?.data?.coins?.length > 0
+  //     ) {
+  //       const coinTo = coinToData.toLowerCase();
+  //       const listKeys = Object.keys(TimePeriod);
+  //       setCoin(`${idCoinFrom}${coinTo}`);
+  //       updateUrl("range", listKeys[index]);
+  //       // localStorage.setItem(
+  //       //   "listWatched",
+  //       //   JSON.stringify([
+  //       //     {
+  //       //       coinFrom,
+  //       //       coinTo,
+  //       //       idCoinFrom,
+  //       //       watched: false,
+  //       //     },
+  //       //   ])
+  //       // );
+  //       if (listWatched?.length > 0) {
+  //         const founded = listWatched.every(
+  //           (el) => `${el.coinFrom}${el.coinTo}` !== `${idCoinFrom}${coinTo}`
+  //         );
+  //         if (founded) {
+  //           listWatched.push({
+  //             coinFrom: idCoinFrom,
+  //             coinTo,
+  //             idCoinFrom,
+  //             watched: false,
+  //             priceCoinFrom,
+  //             priceCoinTo,
+  //           });
+  //           localStorage.setItem("listWatched", JSON.stringify(listWatched));
+  //         }
+  //       } else {
+  //         localStorage.setItem(
+  //           "listWatched",
+  //           JSON.stringify([
+  //             {
+  //               coinFrom: idCoinFrom,
+  //               coinTo,
+  //               idCoinFrom,
+  //               watched: false,
+  //               priceCoinFrom,
+  //               priceCoinTo,
+  //             },
+  //           ])
+  //         );
+  //       }
+  //       setIdCommon({
+  //         ...idCommon,
+  //         countCheckEror: countTemp,
+  //         idCoinFromState: res.data.coins[0].id,
+  //       });
+  //       notify("success", "Generate URL Successfully!", 1500);
+  //     } else {
+  //       notify("warning", "Pair of Coins is not valid!", 1500);
+  //       setIdCommon({ ...idCommon, countCheckEror: 0 });
+  //     }
+  //   } catch (error) {
+  //     notify("warning", "Pair of Coins is not valid!", 1500);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const onSubmit: SubmitHandler<FormProps<string>> = async (
     object: FormProps<string>
   ) => {
@@ -277,7 +268,6 @@ function App() {
       setLoading(true);
       const res = await coinApi.getAllMarkets();
       if (res.status === Status.SUCCESS) {
-        let countTemp = idCommon.countCheckEror;
         const result = object.pairOfCoin.split("/");
         let idCoinFrom = "";
         let priceCoinFrom = "";
@@ -287,23 +277,87 @@ function App() {
             if (values.symbol === result[0].toLowerCase()) {
               idCoinFrom = values.id;
               priceCoinFrom = numeral(values.current_price).format("0.0.00");
-              countTemp++;
             }
             if (values.symbol === result[1].toLowerCase()) {
               priceCoinTo = numeral(values.current_price).format("0.0.00");
-              countTemp++;
             }
           });
-        await getCoinByName(
-          result[0],
-          result[1],
-          idCoinFrom,
-          object?.timeRange || "",
-          priceCoinFrom,
-          priceCoinTo,
-          countTemp,
-          result
+        const listRespon = await Promise.all([
+          coinApi.getCoinByName(result[0]),
+          coinApi.getCoinByName(result[1]),
+        ]);
+        const index = Object.values(TimePeriod).findIndex(
+          (values) => values === object?.timeRange || ""
         );
+        if (
+          listRespon.length === 2 &&
+          result.length === 2 &&
+          index > -1 &&
+          listRespon[0]?.data?.coins?.length > 0 &&
+          listRespon[1]?.data?.coins?.length > 0
+        ) {
+          const coinTo = result[1].toLowerCase();
+          const coinFrom = result[0].toLowerCase();
+          const listKeys = Object.keys(TimePeriod);
+          setCoin(`${coinFrom}${coinTo}`);
+          setListCheck(listRespon);
+          updateUrl("range", listKeys[index]);
+          // localStorage.setItem(
+          //   "listWatched",
+          //   JSON.stringify([
+          //     {
+          //       coinFrom,
+          //       coinTo,
+          //       idCoinFrom,
+          //       watched: false,
+          //     },
+          //   ])
+          // );
+          if (listWatched?.length > 0) {
+            const founded = listWatched.every(
+              (el) => `${el.coinFrom}${el.coinTo}` !== `${coinFrom}${coinTo}`
+            );
+            if (founded) {
+              listWatched.push({
+                coinFrom,
+                coinTo,
+                idCoinFrom,
+                watched: false,
+                priceCoinFrom,
+                priceCoinTo,
+              });
+              localStorage.setItem("listWatched", JSON.stringify(listWatched));
+            }
+          } else {
+            localStorage.setItem(
+              "listWatched",
+              JSON.stringify([
+                {
+                  coinFrom,
+                  coinTo,
+                  idCoinFrom,
+                  watched: false,
+                  priceCoinFrom,
+                  priceCoinTo,
+                },
+              ])
+            );
+          }
+          notify("success", "Generate URL Successfully!", 1500);
+        } else {
+          notify("warning", "Pair of Coins is not valid!", 1500);
+          setListCheck([]);
+        }
+        // await getCoinByName(
+        //   result[0],
+        //   result[1],
+        //   idCoinFrom,
+        //   object?.timeRange || "",
+        //   priceCoinFrom,
+        //   priceCoinTo,
+        //   countTemp,
+        //   result
+        // );
       }
     } catch (error) {
       notify("error", "Error!", 1500);
@@ -379,7 +433,7 @@ function App() {
                     Generate URL
                   </button>
                 </div>
-                {idCommon.countCheckEror === 2 && (
+                {listCheck?.length === 2 && (
                   // <Button
                   //   // onClick={() => {
                   //   //   history.push({
@@ -393,7 +447,7 @@ function App() {
                   // </Button>
                   <Link
                     to={{
-                      pathname: `/coins/${idCommon.idCoinFromState}/${objectCoin["coinTo"]}`,
+                      pathname: `/coins/${objectCoin["coinFrom"]}/${objectCoin["coinTo"]}`,
                       search: `?range=${queryParam["range"]}`,
                     }}
                   >

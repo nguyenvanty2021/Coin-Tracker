@@ -29,6 +29,7 @@ function debounce(fn: any, wait?: number) {
 const Coins = () => {
   const params = useParams();
   const { from, to }: any = params;
+  const [idCoinFrom, setIdCoinFrom] = useState<string>("");
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
   const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
@@ -51,10 +52,11 @@ const Coins = () => {
   const { height } = useWindowDimensions();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleGetAllCoin = useCallback(
-    debounce(async (value: string) => {
+    debounce(async (idCoinFrom: string, value: string) => {
       try {
-        const res = await coinApi.getAllCoin(from, to || "", value);
+        const res = await coinApi.getAllCoin(idCoinFrom, to || "", value);
         if (res.status === Status.SUCCESS) {
+          setIdCoinFrom(idCoinFrom);
           const result =
             res?.data?.prices?.length > 0
               ? res.data.prices.map((values: number[]) => {
@@ -69,13 +71,12 @@ const Coins = () => {
       } catch (error) {
         notify("error", "Error!", 1500);
       } finally {
-        setTimeout(() => {
-          setLoading(false);
-        }, 250);
+        setLoading(false);
       }
     }, 500),
     []
   );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSetLocalStorage = useCallback(
     debounce(async () => {
       if (listWatched?.length === 0) {
@@ -86,7 +87,7 @@ const Coins = () => {
             let priceCoinTo = "";
             res?.data?.length > 0 &&
               res.data.forEach((values: any) => {
-                if (values.id === from) {
+                if (values.symbol === from.toLowerCase()) {
                   priceCoinFrom = numeral(values.current_price).format(
                     "0.0.00"
                   );
@@ -103,8 +104,8 @@ const Coins = () => {
                   coinTo: to,
                   idCoinFrom: from,
                   watched: false,
-                  priceCoinFrom: priceCoinFrom,
-                  priceCoinTo: priceCoinTo,
+                  priceCoinFrom,
+                  priceCoinTo,
                 },
               ])
             );
@@ -121,13 +122,41 @@ const Coins = () => {
     listWatched[indexHeart].watched = !statusHeart;
     localStorage.setItem("listWatched", JSON.stringify(listWatched));
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleCheckCoin = useCallback(
+    debounce(async () => {
+      try {
+        setLoading(true);
+        const listRespon = await Promise.all([
+          coinApi.getCoinByName(from.toLowerCase()),
+          coinApi.getCoinByName(to.toLowerCase()),
+        ]);
+        if (
+          listRespon.length === 2 &&
+          listRespon[0]?.data?.coins?.length > 0 &&
+          listRespon[1]?.data?.coins?.length > 0
+        ) {
+          const indexRange = Object.keys(TimePeriod).findIndex(
+            (values) => values === queryParam["range"]
+          );
+          handleGetAllCoin(
+            listRespon[0].data.coins[0].id,
+            Object.values(TimePeriod)[indexRange]
+          );
+          handleSetLocalStorage();
+        } else {
+          notify("warning", "Pair of Coins is not valid!", 1500);
+        }
+      } catch (error) {
+        notify("error", "Error!", 1500);
+        setLoading(false);
+      }
+    }, 500),
+    []
+  );
+
   useEffect(() => {
-    const indexRange = Object.keys(TimePeriod).findIndex(
-      (values) => values === queryParam["range"]
-    );
-    setLoading(true);
-    handleGetAllCoin(Object.values(TimePeriod)[indexRange]);
-    handleSetLocalStorage();
+    handleCheckCoin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -159,7 +188,7 @@ const Coins = () => {
                   indexRange > -1 ? Object.keys(TimePeriod)[indexRange] : "1D"
                 );
                 setLoading(true);
-                handleGetAllCoin(value);
+                handleGetAllCoin(idCoinFrom, value);
               }}
               defaultValue={
                 indexRange > -1 ? Object.values(TimePeriod)[indexRange] : "1"
