@@ -144,7 +144,8 @@ const Coins = () => {
           );
           handleSetLocalStorage();
         } else {
-          notify("warning", "Pair of Coins is not valid!", 1500);
+          notify("error", "Pair of Coins is not valid!", 1500);
+          setLoading(false);
         }
       } catch (error) {
         notify("error", "Error!", 1500);
