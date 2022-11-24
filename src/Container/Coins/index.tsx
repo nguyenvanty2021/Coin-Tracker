@@ -62,37 +62,40 @@ const Coins = () => {
   //   (values) => values === queryParam["range"]
   // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleCoupleCoin = async (range: string) => {
-    try {
-      const listRespon = await Promise.all([
-        coinApi.getAllCoinCouple(from.toLowerCase(), range),
-        coinApi.getAllCoinCouple(to.toLowerCase(), range),
-      ]);
-      if (
-        listRespon.length === 2 &&
-        listRespon?.[0]?.data?.prices?.length > 0 &&
-        listRespon?.[1]?.data?.prices?.length > 0
-      ) {
-        const listTemp: any = [];
-        listRespon?.[0]?.data?.prices?.forEach((v: any, index: number) => {
-          listTemp.push({
-            date: new Date(v?.[0]),
-            price:
-              parseFloat(v?.[1]) /
-              parseFloat(listRespon?.[1]?.data?.prices?.[index]?.[1]),
+  const handleCoupleCoin = useCallback(
+    debounce(async (range: string) => {
+      try {
+        const listRespon = await Promise.all([
+          coinApi.getAllCoinCouple(from.toLowerCase(), range),
+          coinApi.getAllCoinCouple(to.toLowerCase(), range),
+        ]);
+        if (
+          listRespon.length === 2 &&
+          listRespon?.[0]?.data?.prices?.length > 0 &&
+          listRespon?.[1]?.data?.prices?.length > 0
+        ) {
+          const listTemp: any = [];
+          listRespon?.[0]?.data?.prices?.forEach((v: any, index: number) => {
+            listTemp.push({
+              date: new Date(v?.[0]),
+              price:
+                parseFloat(v?.[1]) /
+                parseFloat(listRespon?.[1]?.data?.prices?.[index]?.[1]),
+            });
           });
-        });
-        setListChartModal([...listTemp]);
-        handleSetLocalStorage();
-      } else {
-        notify("error", "Pair of Coins is not valid!", 1500);
+          setListChartModal([...listTemp]);
+          handleSetLocalStorage();
+        } else {
+          notify("error", "Pair of Coins is not valid!", 1500);
+        }
+      } catch (error) {
+        notify("error", "Error!", 1500);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      notify("error", "Error!", 1500);
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, 500),
+    []
+  );
   // const handleCoupleCoin = useCallback(
   //   debounce(async (range: string) => {
   //     try {
