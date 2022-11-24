@@ -38,15 +38,17 @@ const Coins = () => {
   // });
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
-  const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
+  const [listWatchedState, setListWatchedState] = useState<ListWatchedProps[]>(
+    local ? JSON.parse(local) : []
+  );
   const indexHeart =
-    listWatched?.length > 0
-      ? listWatched.findIndex(
+    listWatchedState?.length > 0
+      ? listWatchedState.findIndex(
           (values) => `${values.coinFrom}${values.coinTo}` === `${from}${to}`
         )
       : -1;
   const [statusHeart, setStatusHeart] = useState<boolean>(
-    indexHeart > -1 ? listWatched[indexHeart].watched : false
+    indexHeart > -1 ? listWatchedState[indexHeart].watched : false
   );
   const [listChartModal, setListChartModal] = useState<DataProps[]>([]);
   const indexRange = Object.keys(TimePeriod).findIndex(
@@ -60,45 +62,76 @@ const Coins = () => {
   //   (values) => values === queryParam["range"]
   // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleCoupleCoin = useCallback(
-    debounce(async (range: string) => {
-      try {
-        const listRespon = await Promise.all([
-          coinApi.getAllCoinCouple(from.toLowerCase(), range),
-          coinApi.getAllCoinCouple(to.toLowerCase(), range),
-        ]);
-        if (
-          listRespon.length === 2 &&
-          listRespon[0]?.data?.prices?.length > 0 &&
-          listRespon[1]?.data?.prices?.length > 0
-        ) {
-          const listTemp: any = [];
-          listRespon[0].data.prices.forEach((v: any, index: number) => {
-            listTemp.push({
-              date: new Date(v[0]),
-              price:
-                parseFloat(v[1]) /
-                parseFloat(listRespon[1].data.prices[index][1]),
-            });
+  const handleCoupleCoin = async (range: string) => {
+    try {
+      const listRespon = await Promise.all([
+        coinApi.getAllCoinCouple(from.toLowerCase(), range),
+        coinApi.getAllCoinCouple(to.toLowerCase(), range),
+      ]);
+      if (
+        listRespon.length === 2 &&
+        listRespon?.[0]?.data?.prices?.length > 0 &&
+        listRespon?.[1]?.data?.prices?.length > 0
+      ) {
+        const listTemp: any = [];
+        listRespon?.[0]?.data?.prices?.forEach((v: any, index: number) => {
+          listTemp.push({
+            date: new Date(v?.[0]),
+            price:
+              parseFloat(v?.[1]) /
+              parseFloat(listRespon?.[1]?.data?.prices?.[index]?.[1]),
           });
-          // setIdCoinCommon({
-          //   ...idCoinCommon,
-          //   from: from,
-          //   to: nameCoinTo,
-          // });
-          setListChartModal([...listTemp]);
-          handleSetLocalStorage();
-        } else {
-          notify("error", "Pair of Coins is not valid!", 1500);
-        }
-      } catch (error) {
-        notify("error", "Error!", 1500);
-      } finally {
-        setLoading(false);
+        });
+        setListChartModal([...listTemp]);
+        handleSetLocalStorage();
+      } else {
+        notify("error", "Pair of Coins is not valid!", 1500);
       }
-    }, 500),
-    []
-  );
+    } catch (error) {
+      notify("error", "Error!", 1500);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // const handleCoupleCoin = useCallback(
+  //   debounce(async (range: string) => {
+  //     try {
+  //       const listRespon = await Promise.all([
+  //         coinApi.getAllCoinCouple(from.toLowerCase(), range),
+  //         coinApi.getAllCoinCouple(to.toLowerCase(), range),
+  //       ]);
+  //       if (
+  //         listRespon.length === 2 &&
+  //         listRespon[0]?.data?.prices?.length > 0 &&
+  //         listRespon[1]?.data?.prices?.length > 0
+  //       ) {
+  //         const listTemp: any = [];
+  //         listRespon[0].data.prices.forEach((v: any, index: number) => {
+  //           listTemp.push({
+  //             date: new Date(v[0]),
+  //             price:
+  //               parseFloat(v[1]) /
+  //               parseFloat(listRespon[1].data.prices[index][1]),
+  //           });
+  //         });
+  //         // setIdCoinCommon({
+  //         //   ...idCoinCommon,
+  //         //   from: from,
+  //         //   to: nameCoinTo,
+  //         // });
+  //         setListChartModal([...listTemp]);
+  //         handleSetLocalStorage();
+  //       } else {
+  //         notify("error", "Pair of Coins is not valid!", 1500);
+  //       }
+  //     } catch (error) {
+  //       notify("error", "Error!", 1500);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }, 500),
+  //   []
+  // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // const handleGetAllCoin = useCallback(
   //   debounce(async (idCoinFrom: string, nameCoinTo: string, value: string) => {
@@ -132,7 +165,7 @@ const Coins = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSetLocalStorage = useCallback(
     debounce(async () => {
-      if (listWatched?.length === 0) {
+      if (listWatchedState?.length === 0) {
         try {
           const res = await coinApi.getAllMarkets();
           if (res.status === Status.SUCCESS) {
@@ -149,19 +182,18 @@ const Coins = () => {
                   priceCoinTo = numeral(values.current_price).format("0.0.00");
                 }
               });
-            localStorage.setItem(
-              "listWatched",
-              JSON.stringify([
-                {
-                  coinFrom: from,
-                  coinTo: to,
-                  idCoinFrom: from,
-                  watched: false,
-                  priceCoinFrom,
-                  priceCoinTo,
-                },
-              ])
-            );
+            const listTemp = [
+              {
+                coinFrom: from,
+                coinTo: to,
+                idCoinFrom: from,
+                watched: false,
+                priceCoinFrom,
+                priceCoinTo,
+              },
+            ];
+            setListWatchedState(listTemp);
+            localStorage.setItem("listWatched", JSON.stringify(listTemp));
           }
         } catch (error) {
           notify("error", "Error!", 1500);
@@ -172,8 +204,9 @@ const Coins = () => {
   );
   const handleUpdateStatusHeart = () => {
     setStatusHeart(!statusHeart);
-    listWatched[indexHeart].watched = !statusHeart;
-    localStorage.setItem("listWatched", JSON.stringify(listWatched));
+    const listTemp = [...listWatchedState];
+    listTemp[indexHeart].watched = !statusHeart;
+    localStorage.setItem("listWatched", JSON.stringify(listTemp));
   };
   // // eslint-disable-next-line react-hooks/exhaustive-deps
   // const handleCheckCoin = useCallback(
