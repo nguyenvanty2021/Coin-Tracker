@@ -29,13 +29,13 @@ function debounce(fn: any, wait?: number) {
 const Coins = () => {
   const params = useParams();
   const { from, to }: any = params;
-  const [idCoinCommon, setIdCoinCommon] = useState<{
-    from: string;
-    to: string;
-  }>({
-    from: "",
-    to: "",
-  });
+  // const [idCoinCommon, setIdCoinCommon] = useState<{
+  //   from: string;
+  //   to: string;
+  // }>({
+  //   from: "",
+  //   to: "",
+  // });
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
   const listWatched: ListWatchedProps[] = local ? JSON.parse(local) : [];
@@ -56,31 +56,40 @@ const Coins = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const { height } = useWindowDimensions();
+  // const indexRange = Object.keys(TimePeriod).findIndex(
+  //   (values) => values === queryParam["range"]
+  // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleGetAllCoin = useCallback(
-    debounce(async (idCoinFrom: string, nameCoinTo: string, value: string) => {
+  const handleCoupleCoin = useCallback(
+    debounce(async (range: string) => {
       try {
-        const res = await coinApi.getAllCoin(
-          idCoinFrom,
-          nameCoinTo.toLowerCase(),
-          value
-        );
-        if (res.status === Status.SUCCESS) {
-          setIdCoinCommon({
-            ...idCoinCommon,
-            from: idCoinFrom,
-            to: nameCoinTo,
+        const listRespon = await Promise.all([
+          coinApi.getAllCoinCouple(from.toLowerCase(), range),
+          coinApi.getAllCoinCouple(to.toLowerCase(), range),
+        ]);
+        if (
+          listRespon.length === 2 &&
+          listRespon[0]?.data?.prices?.length > 0 &&
+          listRespon[1]?.data?.prices?.length > 0
+        ) {
+          const listTemp: any = [];
+          listRespon[0].data.prices.forEach((v: any, index: number) => {
+            listTemp.push({
+              date: new Date(v[0]),
+              price:
+                parseFloat(v[1]) /
+                parseFloat(listRespon[1].data.prices[index][1]),
+            });
           });
-          const result =
-            res?.data?.prices?.length > 0
-              ? res.data.prices.map((values: number[]) => {
-                  return {
-                    date: new Date(values[0]),
-                    price: values[1],
-                  };
-                })
-              : [];
-          setListChartModal([...result]);
+          // setIdCoinCommon({
+          //   ...idCoinCommon,
+          //   from: from,
+          //   to: nameCoinTo,
+          // });
+          setListChartModal([...listTemp]);
+          handleSetLocalStorage();
+        } else {
+          notify("error", "Pair of Coins is not valid!", 1500);
         }
       } catch (error) {
         notify("error", "Error!", 1500);
@@ -90,6 +99,36 @@ const Coins = () => {
     }, 500),
     []
   );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // const handleGetAllCoin = useCallback(
+  //   debounce(async (idCoinFrom: string, nameCoinTo: string, value: string) => {
+  //     try {
+  //       const res = await coinApi.getAllCoin(
+  //         idCoinFrom,
+  //         nameCoinTo.toLowerCase(),
+  //         value
+  //       );
+  //       if (res.status === Status.SUCCESS) {
+
+  //         const result =
+  //           res?.data?.prices?.length > 0
+  //             ? res.data.prices.map((values: number[]) => {
+  //                 return {
+  //                   date: new Date(values[0]),
+  //                   price: values[1],
+  //                 };
+  //               })
+  //             : [];
+
+  //       }
+  //     } catch (error) {
+  //       notify("error", "Error!", 1500);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }, 500),
+  //   []
+  // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSetLocalStorage = useCallback(
     debounce(async () => {
@@ -101,12 +140,12 @@ const Coins = () => {
             let priceCoinTo = "";
             res?.data?.length > 0 &&
               res.data.forEach((values: any) => {
-                if (values.symbol === from.toLowerCase()) {
+                if (values.id === from.toLowerCase()) {
                   priceCoinFrom = numeral(values.current_price).format(
                     "0.0.00"
                   );
                 }
-                if (values.symbol === to.toLowerCase()) {
+                if (values.id === to.toLowerCase()) {
                   priceCoinTo = numeral(values.current_price).format("0.0.00");
                 }
               });
@@ -136,43 +175,40 @@ const Coins = () => {
     listWatched[indexHeart].watched = !statusHeart;
     localStorage.setItem("listWatched", JSON.stringify(listWatched));
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleCheckCoin = useCallback(
-    debounce(async () => {
-      try {
-        const listRespon = await Promise.all([
-          coinApi.getCoinByName(from.toLowerCase()),
-          coinApi.getCoinByName(to.toLowerCase()),
-        ]);
-        if (
-          listRespon.length === 2 &&
-          listRespon[0]?.data?.coins?.length > 0 &&
-          listRespon[1]?.data?.coins?.length > 0
-        ) {
-          const indexRange = Object.keys(TimePeriod).findIndex(
-            (values) => values === queryParam["range"]
-          );
-          handleGetAllCoin(
-            listRespon[0].data.coins[0].id,
-            listRespon[1].data.coins[0].symbol,
-            Object.values(TimePeriod)[indexRange]
-          );
-          handleSetLocalStorage();
-        } else {
-          notify("error", "Pair of Coins is not valid!", 1500);
-          setLoading(false);
-        }
-      } catch (error) {
-        notify("error", "Error!", 1500);
-        setLoading(false);
-      }
-    }, 500),
-    []
-  );
-
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // const handleCheckCoin = useCallback(
+  //   debounce(async () => {
+  //     try {
+  //       const listRespon = await Promise.all([
+  //         coinApi.getCoinByName(from.toLowerCase()),
+  //         coinApi.getCoinByName(to.toLowerCase()),
+  //       ]);
+  //       if (
+  //         listRespon.length === 2 &&
+  //         listRespon[0]?.data?.coins?.length > 0 &&
+  //         listRespon[1]?.data?.coins?.length > 0
+  //       ) {
+  //         handleGetAllCoin(
+  //           listRespon[0].data.coins[0].id,
+  //           listRespon[1].data.coins[0].symbol,
+  //           Object.values(TimePeriod)[indexRange]
+  //         );
+  //         handleSetLocalStorage();
+  //       } else {
+  //         notify("error", "Pair of Coins is not valid!", 1500);
+  //         setLoading(false);
+  //       }
+  //     } catch (error) {
+  //       notify("error", "Error!", 1500);
+  //       setLoading(false);
+  //     }
+  //   }, 500),
+  //   []
+  // );
   useEffect(() => {
     setLoading(true);
-    handleCheckCoin();
+    // handleCheckCoin();
+    handleCoupleCoin(Object.values(TimePeriod)[indexRange]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -204,7 +240,7 @@ const Coins = () => {
                   indexRange > -1 ? Object.keys(TimePeriod)[indexRange] : "1D"
                 );
                 setLoading(true);
-                handleGetAllCoin(idCoinCommon.from, idCoinCommon.to, value);
+                handleCoupleCoin(Object.values(TimePeriod)[indexRange]);
               }}
               defaultValue={
                 indexRange > -1 ? Object.values(TimePeriod)[indexRange] : "1"
