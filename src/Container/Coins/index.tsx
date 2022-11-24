@@ -74,13 +74,18 @@ const Coins = () => {
           listRespon?.[0]?.data?.prices?.length > 0 &&
           listRespon?.[1]?.data?.prices?.length > 0
         ) {
+          let listCoinFrom = listRespon?.[0]?.data?.prices;
+          let listCoinTo = listRespon?.[1]?.data?.prices;
+          if (listCoinFrom?.length > listCoinTo?.length) {
+            listCoinFrom.length = listCoinTo.length;
+          } else {
+            listCoinTo.length = listCoinFrom.length;
+          }
           const listTemp: any = [];
-          listRespon?.[0]?.data?.prices?.forEach((v: any, index: number) => {
+          listCoinFrom?.forEach((v: any, index: number) => {
             listTemp.push({
               date: new Date(v?.[0]),
-              price:
-                parseFloat(v?.[1]) /
-                parseFloat(listRespon?.[1]?.data?.prices?.[index]?.[1]),
+              price: parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
             });
           });
           setListChartModal([...listTemp]);
@@ -178,11 +183,11 @@ const Coins = () => {
               res.data.forEach((values: any) => {
                 if (values.id === from.toLowerCase()) {
                   priceCoinFrom = numeral(values.current_price).format(
-                    "0.0.00"
+                    "0.00000"
                   );
                 }
                 if (values.id === to.toLowerCase()) {
-                  priceCoinTo = numeral(values.current_price).format("0.0.00");
+                  priceCoinTo = numeral(values.current_price).format("0.00000");
                 }
               });
             const listTemp = [
@@ -295,9 +300,8 @@ const Coins = () => {
           </div>
           <div className={styles.coins__title}>
             <h3>
-              {from &&
-                to &&
-                `${from.toUpperCase()} to ${to.toUpperCase()} Price Chart`}
+              {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}
+              <b> Pair</b> Chart
             </h3>
             {statusHeart ? (
               <HeartFilled

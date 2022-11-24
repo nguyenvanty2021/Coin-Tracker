@@ -276,10 +276,10 @@ function App() {
           res.data.forEach((values: any) => {
             if (values.symbol === result[0].toLowerCase()) {
               idCoinFrom = values.id;
-              priceCoinFrom = numeral(values.current_price).format("0.0.00");
+              priceCoinFrom = numeral(values.current_price).format("0.00000");
             }
             if (values.symbol === result[1].toLowerCase()) {
-              priceCoinTo = numeral(values.current_price).format("0.0.00");
+              priceCoinTo = numeral(values.current_price).format("0.00000");
             }
           });
         const listRespon = await Promise.all([

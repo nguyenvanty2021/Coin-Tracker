@@ -26,7 +26,7 @@ export const handleFormatCoin = (coin: number) => {
 const getDate = (d: DataProps) => new Date(d.date);
 const getStockValue = (d: DataProps) => d?.price || 0;
 const getFormatValue = (d: DataProps) => {
-  return numeral(d?.price || 0).format(`$${handleFormatCoin(d?.price || 0)}`);
+  return numeral(d?.price || 0).format(`${handleFormatCoin(d?.price || 0)}`);
 };
 const bisectDate = bisector<DataProps, Date>((d) => new Date(d.date)).left;
 
@@ -108,7 +108,7 @@ const PrimaryChart: React.FC<PrimaryChartProps> = ({
           stroke="#26619C"
           xTickFormat={(d) => {
             return numeral(d).format(
-              d <= 100 ? `$${handleFormatCoin(d)}` : "$0,0"
+              d <= 100 ? `${handleFormatCoin(d)}` : "0,0"
             );
           }}
         />
@@ -176,11 +176,11 @@ const PrimaryChart: React.FC<PrimaryChartProps> = ({
             }}
           >
             <SC.DivItem>
-              <SC.TabItem>
+              {/* <SC.TabItem>
                 <b>{format(getDate(tooltipData), "PPpp")}</b>
-              </SC.TabItem>
+              </SC.TabItem> */}
               <li>
-                Price: <b>{`${getFormatValue(tooltipData)}`}</b>
+                <b>{`${getFormatValue(tooltipData)}`}</b>
               </li>
             </SC.DivItem>
           </TooltipWithBounds>
