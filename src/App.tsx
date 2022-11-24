@@ -296,10 +296,12 @@ function App() {
           listRespon[0]?.data?.coins?.length > 0 &&
           listRespon[1]?.data?.coins?.length > 0
         ) {
-          const coinTo = result[1].toLowerCase();
-          const coinFrom = result[0].toLowerCase();
+          // const coinTo = result[1].toLowerCase();
+          // const coinFrom = result[0].toLowerCase();
           const listKeys = Object.keys(TimePeriod);
-          setCoin(`${coinFrom}${coinTo}`);
+          setCoin(
+            `${listRespon[0].data.coins[0].id}${listRespon[1].data.coins[0].id}`
+          );
           setListCheck(listRespon);
           updateUrl("range", listKeys[index]);
           // localStorage.setItem(
@@ -315,12 +317,14 @@ function App() {
           // );
           if (listWatched?.length > 0) {
             const founded = listWatched.every(
-              (el) => `${el.coinFrom}${el.coinTo}` !== `${coinFrom}${coinTo}`
+              (el) =>
+                `${el.coinFrom}${el.coinTo}` !==
+                `${listRespon[0].data.coins[0].id}${listRespon[1].data.coins[0].id}`
             );
             if (founded) {
               listWatched.push({
-                coinFrom,
-                coinTo,
+                coinFrom: listRespon[0].data.coins[0].id,
+                coinTo: listRespon[1].data.coins[0].id,
                 idCoinFrom,
                 watched: false,
                 priceCoinFrom,
@@ -333,8 +337,8 @@ function App() {
               "listWatched",
               JSON.stringify([
                 {
-                  coinFrom,
-                  coinTo,
+                  coinFrom: listRespon[0].data.coins[0].id,
+                  coinTo: listRespon[1].data.coins[0].id,
                   idCoinFrom,
                   watched: false,
                   priceCoinFrom,
