@@ -176,9 +176,11 @@ const PrimaryChart: React.FC<PrimaryChartProps> = ({
             }}
           >
             <SC.DivItem>
-              {/* <SC.TabItem>
-                <b>{format(getDate(tooltipData), "PPpp")}</b>
-              </SC.TabItem> */}
+              <SC.TabItem>
+                <b style={{ fontSize: "0.7rem" }}>
+                  {format(getDate(tooltipData), "yyyy/MM/dd")}
+                </b>
+              </SC.TabItem>
               <li>
                 <b>{`${getFormatValue(tooltipData)}`}</b>
               </li>

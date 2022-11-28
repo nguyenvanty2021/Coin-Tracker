@@ -77,19 +77,54 @@ const Coins = () => {
           let listCoinFrom = listRespon?.[0]?.data?.prices;
           let listCoinTo = listRespon?.[1]?.data?.prices;
           if (listCoinFrom?.length > listCoinTo?.length) {
-            listCoinFrom.length = listCoinTo.length;
-          } else {
-            listCoinTo.length = listCoinFrom.length;
-          }
-          const listTemp: any = [];
-          listCoinFrom?.forEach((v: any, index: number) => {
-            listTemp.push({
-              date: new Date(v?.[0]),
-              price: parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
+            // listCoinFrom.length = listCoinTo.length;
+            const result = listCoinFrom.slice(
+              listCoinFrom.length - listCoinTo.length - 1,
+              -1
+            );
+            result.push(listCoinFrom[listCoinFrom.length - 1]);
+            result.shift();
+            // console.log(listCoinTo);
+            const listTemp: any = [];
+            result?.forEach((v: any, index: number) => {
+              listTemp.push({
+                date: new Date(v?.[0]),
+                price:
+                  parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
+              });
+              // console.log("coin1: ", parseFloat(v?.[1]));
+              // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
+              // console.log(
+              //   "result: ",
+              //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
+              // );
             });
-          });
-          setListChartModal([...listTemp]);
-          handleSetLocalStorage();
+            setListChartModal([...listTemp]);
+            handleSetLocalStorage();
+          } else {
+            // listCoinTo.length = listCoinFrom.length;
+            const result = listCoinTo.slice(
+              listCoinTo.length - listCoinFrom.length,
+              -1
+            );
+            result.push(listCoinTo[listCoinTo.length - 1]);
+            result.shift();
+            const listTemp: any = [];
+            listCoinFrom?.forEach((v: any, index: number) => {
+              listTemp.push({
+                date: new Date(v?.[0]),
+                price: parseFloat(v?.[1]) / parseFloat(result?.[index]?.[1]),
+              });
+              // console.log("coin1: ", parseFloat(v?.[1]));
+              // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
+              // console.log(
+              //   "result: ",
+              //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
+              // );
+            });
+            setListChartModal([...listTemp]);
+            handleSetLocalStorage();
+          }
         } else {
           notify("error", "Pair of Coins is not valid!", 1500);
         }
@@ -300,8 +335,10 @@ const Coins = () => {
           </div>
           <div className={styles.coins__title}>
             <h3>
-              {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}
-              <b> Pair</b> Chart
+              <b>
+                {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}{" "}
+              </b>
+              Pair Chart
             </h3>
             {statusHeart ? (
               <HeartFilled
