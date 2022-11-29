@@ -35,7 +35,7 @@ const ChartComponent = (props: any) => {
     areaBottomColor: "rgba(41, 98, 255, 0.28)",
   };
   const chartContainerRef: any = useRef();
-  const priceFirst = data[0][1];
+  const priceFirst = data[0].value;
   useEffect(() => {
     const handleResize = () => {
       chart.applyOptions({
