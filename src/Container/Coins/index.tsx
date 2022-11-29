@@ -50,14 +50,14 @@ const ChartComponent = (props: any) => {
       // handleScroll: {
       //   vertTouchDrag: false,
       // },
-      // rightPriceScale: {
-      //   scaleMargins: {
-      //     top: 0.3,
-      //     bottom: 0.25,
-      //   },
-      //   borderVisible: false,
-      //   // width: 50,
-      // },
+      rightPriceScale: {
+        scaleMargins: {
+          top: 0.3,
+          bottom: 0.25,
+        },
+        // borderVisible: false,
+        // width: 50,
+      },
       timeScale: {
         // rightOffset: 12,
         // barSpacing: 3,
@@ -183,6 +183,7 @@ const ChartComponent = (props: any) => {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     data,
     colors.backgroundColor,
