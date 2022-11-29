@@ -21,7 +21,9 @@ import moment from "moment";
 //     return "\u00A3" + price.toFixed(4);
 //   },
 // };
-
+const handleFormatCoin = (coin: number) => {
+  return coin < 0.01 ? 0.000001 : coin < 0.1 ? 0.00001 : coin < 10 ? 0.0001 : 1;
+};
 // const formatterNames = Object.keys(formatters);
 const ChartComponent = (props: any) => {
   const { data } = props;
@@ -33,6 +35,7 @@ const ChartComponent = (props: any) => {
     areaBottomColor: "rgba(41, 98, 255, 0.28)",
   };
   const chartContainerRef: any = useRef();
+  const priceFirst = data[0][1];
   useEffect(() => {
     const handleResize = () => {
       chart.applyOptions({
@@ -69,7 +72,7 @@ const ChartComponent = (props: any) => {
         secondsVisible: false,
         tickMarkFormatter: (time: any) => {
           // console.log(time);
-          const dateString = moment.unix(time).format("YYYY/MM/DD");
+          const dateString = moment.unix(time).format("YYYY/MM/DD HH:MM");
           // console.log(dateString);
           // const date = new Date(time.year, time.month, time.day);
           return dateString;
@@ -103,8 +106,17 @@ const ChartComponent = (props: any) => {
     let newSeries = chart.addAreaSeries({
       priceFormat: {
         type: "price",
-        precision: 6,
-        minMove: 0.000001,
+        precision:
+          data?.length > 0
+            ? priceFirst < 0.01
+              ? 6
+              : priceFirst < 0.1
+              ? 5
+              : priceFirst < 10
+              ? 4
+              : 0
+            : 0,
+        minMove: handleFormatCoin(priceFirst),
       },
       // crosshairMarkerVisible: false,
       // crosshairMarkerRadius: 3,
@@ -114,6 +126,7 @@ const ChartComponent = (props: any) => {
       topColor: colors.areaTopColor,
       bottomColor: colors.areaBottomColor,
     });
+
     // export const handleFormatCoin = (coin: number) => {
     //   return coin < 0.01
     //     ? "0,0.000000"
@@ -267,7 +280,7 @@ const Coins = () => {
               // );
             });
             setListChartModal([...listTemp]);
-            localStorage.setItem("aaa", JSON.stringify(listTemp));
+
             handleSetLocalStorage();
           } else if (listCoinFrom?.length < listCoinTo?.length) {
             // listCoinTo.length = listCoinFrom.length;
@@ -291,7 +304,7 @@ const Coins = () => {
               // );
             });
             setListChartModal([...listTemp]);
-            localStorage.setItem("aaa", JSON.stringify(listTemp));
+
             handleSetLocalStorage();
           } else {
             const listTemp: any = [];
@@ -309,7 +322,7 @@ const Coins = () => {
               // );
             });
             setListChartModal([...listTemp]);
-            localStorage.setItem("aaa", JSON.stringify(listTemp));
+
             handleSetLocalStorage();
           }
         } else {
@@ -542,7 +555,9 @@ const Coins = () => {
               }}
             /> */}
           </div>
-          <ChartComponentHOC data={listChartModal}></ChartComponentHOC>
+          <ChartComponentHOC
+            data={listChartModal?.length > 0 ? listChartModal : []}
+          ></ChartComponentHOC>
         </>
       )}
     </div>
