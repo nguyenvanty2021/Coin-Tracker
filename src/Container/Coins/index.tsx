@@ -71,7 +71,7 @@ const ChartComponent = (props: any) => {
         secondsVisible: false,
         tickMarkFormatter: (time: any) => {
           // console.log(time);
-          const dateString = moment.unix(time).format("YYYY/MM/DD HH:MM");
+          const dateString = moment.unix(time).format("HH:MM");
           // console.log(dateString);
           // const date = new Date(time.year, time.month, time.day);
           return dateString;
