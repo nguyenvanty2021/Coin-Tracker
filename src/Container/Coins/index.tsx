@@ -67,7 +67,6 @@ const ChartComponent = (props: any) => {
         // borderVisible: false,
         // borderColor: "#fff000",
         // visible: true,
-
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: any) => {
