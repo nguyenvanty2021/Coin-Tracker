@@ -1,18 +1,188 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
 import { Radio } from "antd";
 import styles from "./styles.module.scss";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
 import { listTimeRange, ListWatchedProps, TimePeriod } from "../../App";
-import PrimaryChart from "../../Components/PrimaryChart";
 import { DataProps } from "../../Components/PrimaryChart/interfaces";
 import { Status } from "../../Constants/enum";
-import useWindowDimensions from "../../hooks/useWindowDimensions";
+import { createChart, ColorType } from "lightweight-charts";
 import { getQueryParam, updateUrl } from "../../Utils/query";
 import Loading from "../../Components/Loading";
 import { useParams } from "react-router-dom";
 import { notify } from "../../Utils/notification";
 import numeral from "numeral";
+import moment from "moment";
+// var formatters: any = {
+//   Dollar: function (price: any): any {
+//     return "$" + price.toFixed(4);
+//   },
+//   Pound: function (price: any): any {
+//     return "\u00A3" + price.toFixed(4);
+//   },
+// };
+
+// const formatterNames = Object.keys(formatters);
+const ChartComponent = (props: any) => {
+  const { data } = props;
+  const colors: any = {
+    backgroundColor: "white",
+    lineColor: "#2962FF",
+    textColor: "black",
+    areaTopColor: "#2962FF",
+    areaBottomColor: "rgba(41, 98, 255, 0.28)",
+  };
+  const chartContainerRef: any = useRef();
+  useEffect(() => {
+    const handleResize = () => {
+      chart.applyOptions({
+        width: chartContainerRef.current.clientWidth,
+      });
+    };
+    const chart: any = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: colors.backgroundColor },
+        textColor: colors.textColor,
+      },
+      // handleScroll: {
+      //   vertTouchDrag: false,
+      // },
+      // rightPriceScale: {
+      //   scaleMargins: {
+      //     top: 0.3,
+      //     bottom: 0.25,
+      //   },
+      //   borderVisible: false,
+      //   // width: 50,
+      // },
+      timeScale: {
+        // rightOffset: 12,
+        // barSpacing: 3,
+        // fixLeftEdge: true,
+        // lockVisibleTimeRangeOnResize: true,
+        // rightBarStaysOnScroll: true,
+        // borderVisible: false,
+        // borderColor: "#fff000",
+        // visible: true,
+
+        timeVisible: true,
+        secondsVisible: false,
+        tickMarkFormatter: (time: any) => {
+          // console.log(time);
+          const dateString = moment.unix(time).format("YYYY/MM/DD");
+          // console.log(dateString);
+          // const date = new Date(time.year, time.month, time.day);
+          return dateString;
+        },
+      },
+      // grid: {
+      //   vertLines: {
+      //     color: "rgba(70, 130, 180, 0.5)",
+      //     style: 1, // 1.Solid; 2.Dotted; 3.Dashed; 4.LargeDashed; 5.SparseDotted
+      //     visible: true,
+      //   },
+      //   horzLines: {
+      //     color: "rgba(70, 130, 180, 0.5);",
+      //     style: 1, // 1.Solid; 2.Dotted; 3.Dashed; 4.LargeDashed; 5.SparseDotted
+      //     visible: true,
+      //   },
+      // },
+      // watermark: {
+      //   horzAlign: "center",
+      //   vertAlign: "top",
+      // },
+
+      // localization: {
+      //   dateFormat: "MM/dd/yy",
+      //   locale: "en-US",
+      // },
+      width: chartContainerRef.current.clientWidth,
+      height: 300,
+    });
+    chart.timeScale().fitContent();
+    let newSeries = chart.addAreaSeries({
+      priceFormat: {
+        type: "price",
+        precision: 6,
+        minMove: 0.000001,
+      },
+      // crosshairMarkerVisible: false,
+      // crosshairMarkerRadius: 3,
+      lineWidth: 2,
+      // lineType: 6,
+      lineColor: colors.lineColor,
+      topColor: colors.areaTopColor,
+      bottomColor: colors.areaBottomColor,
+    });
+    // export const handleFormatCoin = (coin: number) => {
+    //   return coin < 0.01
+    //     ? "0,0.000000"
+    //     : coin < 0.1
+    //     ? "0,0.00000"
+    //     : coin < 10
+    //     ? "0,0.0000"
+    //     : "0,0.000";
+    // };
+    // var volumeSeries = chart.addHistogramSeries({
+    //   color: "#26a69a",
+    //   priceFormat: {
+    //     type: "volume",
+    //   },
+    //   priceScaleId: "",
+    //   scaleMargins: {
+    //     top: 0.8,
+    //     bottom: 0,
+    //   },
+    // });
+    // newSeries = chart.addLineSeries({
+    //   // or right
+    //   priceScaleId: "left",
+    //   // chart title
+    //   title: "Series title example",
+    //   // top & bottom margins
+    //   scaleMargins: {
+    //     top: 0.1,
+    //     bottom: 0.3,
+    //   },
+    //   // overrides autoscale
+    //   autoscaleInfoProvider: () => {
+    //     return {
+    //       priceRange: {
+    //         minValue: 0,
+    //         maxValue: 100,
+    //       },
+    //     };
+    //   },
+    // });
+    newSeries.setData(data);
+
+    // const barsInfo = newSeries.barsInLogicalRange(
+    //   chart.timeScale().getVisibleLogicalRange()
+    // );
+    // console.log(barsInfo);
+    // // take a screenshot
+    // chart.takeScreenshot();
+    // // two functions to access this price scale implicitly
+    // const coordinate = newSeries.priceToCoordinate(100.5);
+    // const price = newSeries.coordinateToPrice(324);
+    // volumeSeries.setData(data);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
+  }, [
+    data,
+    colors.backgroundColor,
+    colors.lineColor,
+    colors.textColor,
+    colors.areaTopColor,
+    colors.areaBottomColor,
+  ]);
+
+  return <div className={styles.chart} ref={chartContainerRef} />;
+};
+const ChartComponentHOC = memo(ChartComponent);
 function debounce(fn: any, wait?: number) {
   let timerId: any, lastArguments: any, lastThis: any;
   return (...args: any) => {
@@ -56,8 +226,6 @@ const Coins = () => {
   );
   const gridItemRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [boxWidth, setBoxWidth] = useState<number>(0);
-  const { height } = useWindowDimensions();
   // const indexRange = Object.keys(TimePeriod).findIndex(
   //   (values) => values === queryParam["range"]
   // );
@@ -87,8 +255,8 @@ const Coins = () => {
             const listTemp: any = [];
             result?.forEach((v: any, index: number) => {
               listTemp.push({
-                date: new Date(v?.[0]),
-                price:
+                time: moment(v?.[0]).unix(),
+                value:
                   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
               });
               // console.log("coin1: ", parseFloat(v?.[1]));
@@ -99,6 +267,7 @@ const Coins = () => {
               // );
             });
             setListChartModal([...listTemp]);
+            localStorage.setItem("aaa", JSON.stringify(listTemp));
             handleSetLocalStorage();
           } else if (listCoinFrom?.length < listCoinTo?.length) {
             // listCoinTo.length = listCoinFrom.length;
@@ -111,8 +280,8 @@ const Coins = () => {
             const listTemp: any = [];
             listCoinFrom?.forEach((v: any, index: number) => {
               listTemp.push({
-                date: new Date(v?.[0]),
-                price: parseFloat(v?.[1]) / parseFloat(result?.[index]?.[1]),
+                time: moment(v?.[0]).unix(),
+                value: parseFloat(v?.[1]) / parseFloat(result?.[index]?.[1]),
               });
               // console.log("coin1: ", parseFloat(v?.[1]));
               // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
@@ -122,13 +291,14 @@ const Coins = () => {
               // );
             });
             setListChartModal([...listTemp]);
+            localStorage.setItem("aaa", JSON.stringify(listTemp));
             handleSetLocalStorage();
           } else {
             const listTemp: any = [];
             listCoinFrom?.forEach((v: any, index: number) => {
               listTemp.push({
-                date: new Date(v?.[0]),
-                price:
+                time: moment(v?.[0]).unix(),
+                value:
                   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
               });
               // console.log("coin1: ", parseFloat(v?.[1]));
@@ -139,6 +309,7 @@ const Coins = () => {
               // );
             });
             setListChartModal([...listTemp]);
+            localStorage.setItem("aaa", JSON.stringify(listTemp));
             handleSetLocalStorage();
           }
         } else {
@@ -152,6 +323,8 @@ const Coins = () => {
     }, 500),
     []
   );
+  const localAAA = localStorage.getItem("aaa");
+  const aaa = localAAA && JSON.parse(localAAA);
   // const handleCoupleCoin = useCallback(
   //   debounce(async (range: string) => {
   //     try {
@@ -303,18 +476,6 @@ const Coins = () => {
     handleCoupleCoin(Object.values(TimePeriod)[indexRange]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    const handleResize = (width?: number) => {
-      setBoxWidth(width || 0);
-    };
-    handleResize(gridItemRef.current?.clientWidth || 0);
-    window.addEventListener("resize", () =>
-      handleResize(gridItemRef?.current?.clientWidth || 0)
-    );
-    return () => {
-      window.removeEventListener("resize", () => handleResize());
-    };
-  }, [gridItemRef]);
   return (
     <div className={styles.coins} ref={gridItemRef}>
       {loading && <Loading />}
@@ -369,7 +530,7 @@ const Coins = () => {
             )}
           </div>
           <div className={styles.chart}>
-            <PrimaryChart
+            {/* <PrimaryChart
               data={listChartModal}
               height={Math.floor(height * 0.4)}
               width={boxWidth}
@@ -379,8 +540,9 @@ const Coins = () => {
                 bottom: 40,
                 left: 48,
               }}
-            />
+            /> */}
           </div>
+          <ChartComponentHOC data={listChartModal}></ChartComponentHOC>
         </>
       )}
     </div>
