@@ -26,7 +26,7 @@ const handleFormatCoin = (coin: number) => {
 };
 // const formatterNames = Object.keys(formatters);
 const ChartComponent = (props: any) => {
-  const { data } = props;
+  const { data, from, to, range } = props;
   const colors: any = {
     backgroundColor: "white",
     lineColor: "#2962FF",
@@ -42,7 +42,8 @@ const ChartComponent = (props: any) => {
         width: chartContainerRef.current.clientWidth,
       });
     };
-    const chart: any = createChart(chartContainerRef.current, {
+    const element: any = document.getElementById("container");
+    const chart: any = createChart(element, {
       layout: {
         background: { type: ColorType.Solid, color: colors.backgroundColor },
         textColor: colors.textColor,
@@ -58,6 +59,26 @@ const ChartComponent = (props: any) => {
         // borderVisible: false,
         // width: 50,
       },
+      crosshair: {
+        // hide the horizontal crosshair line
+        horzLine: {
+          visible: false,
+          labelVisible: false,
+        },
+        // hide the vertical crosshair label
+        vertLine: {
+          labelVisible: false,
+        },
+      },
+      // hide the grid lines
+      grid: {
+        vertLines: {
+          visible: false,
+        },
+        horzLines: {
+          visible: false,
+        },
+      },
       timeScale: {
         // rightOffset: 12,
         // barSpacing: 3,
@@ -71,7 +92,9 @@ const ChartComponent = (props: any) => {
         // secondsVisible: false,
         tickMarkFormatter: (time: any) => {
           // console.log(time);
-          const dateString = moment.unix(time).format("YYYY/MM/DD HH:MM");
+          const dateString = moment
+            .unix(time)
+            .format(range !== "1D" ? "YYYY/MM/DD" : "HH:MM");
           // console.log(dateString);
           // const date = new Date(time.year, time.month, time.day);
           return dateString;
@@ -121,6 +144,7 @@ const ChartComponent = (props: any) => {
       // crosshairMarkerRadius: 3,
       lineWidth: 2,
       // lineType: 6,
+      crossHairMarkerVisible: false,
       lineColor: colors.lineColor,
       topColor: colors.areaTopColor,
       bottomColor: colors.areaBottomColor,
@@ -167,7 +191,60 @@ const ChartComponent = (props: any) => {
     //   },
     // });
     newSeries.setData(data);
+    const container: any = document.getElementById("container");
 
+    function dateToString(date: any) {
+      const dateString = moment.unix(date).format("YYYY/MM/DD HH:MM");
+      return dateString;
+    }
+
+    const toolTipWidth = 80;
+    const toolTipHeight = 120;
+    const toolTipMargin = 15;
+    // Create and style the tooltip html element
+    const toolTip: any = document.createElement("div");
+    toolTip.style = `width: 155px; height: 100px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
+    toolTip.style.background = "white";
+    toolTip.style.color = "black";
+    toolTip.style.borderColor = "rgba( 38, 166, 154, 1)";
+    container.appendChild(toolTip);
+    // update tooltip
+    chart.subscribeCrosshairMove((param: any) => {
+      if (
+        param.point === undefined ||
+        !param.time ||
+        param.point.x < 0 ||
+        param.point.x > container.clientWidth ||
+        param.point.y < 0 ||
+        param.point.y > container.clientHeight
+      ) {
+        toolTip.style.display = "none";
+      } else {
+        const dateStr = dateToString(param.time);
+        toolTip.style.display = "block";
+        const price = param.seriesPrices.get(newSeries);
+        toolTip.innerHTML = `<div style="color: ${"rgba( 38, 166, 154, 1)"}">${
+          from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`
+        }</div><div style="font-size: 24px; margin: 4px 0px; color: ${"black"}">
+			${Math.round(100 * price) / 100}
+			</div><div style="color: ${"black"}">
+			${dateStr}
+			</div>`;
+
+        const y = param.point.y;
+        let left = param.point.x + toolTipMargin;
+        if (left > container.clientWidth - toolTipWidth) {
+          left = param.point.x - toolTipMargin - toolTipWidth;
+        }
+
+        let top = y + toolTipMargin;
+        if (top > container.clientHeight - toolTipHeight) {
+          top = y - toolTipHeight - toolTipMargin;
+        }
+        toolTip.style.left = left + "px";
+        toolTip.style.top = top + "px";
+      }
+    });
     // const barsInfo = newSeries.barsInLogicalRange(
     //   chart.timeScale().getVisibleLogicalRange()
     // );
@@ -193,7 +270,9 @@ const ChartComponent = (props: any) => {
     colors.areaBottomColor,
   ]);
 
-  return <div className={styles.chart} ref={chartContainerRef} />;
+  return (
+    <div className={styles.chart} id="container" ref={chartContainerRef} />
+  );
 };
 const ChartComponentHOC = memo(ChartComponent);
 function debounce(fn: any, wait?: number) {
@@ -524,7 +603,7 @@ const Coins = () => {
           <div className={styles.coins__title}>
             <h3>
               <b>
-                {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}{" "}
+                {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}
               </b>
               Pair Chart
             </h3>
@@ -554,6 +633,9 @@ const Coins = () => {
             /> */}
           </div>
           <ChartComponentHOC
+            from={from}
+            to={to}
+            range={queryParam["range"]}
             data={listChartModal?.length > 0 ? listChartModal : []}
           ></ChartComponentHOC>
         </>
