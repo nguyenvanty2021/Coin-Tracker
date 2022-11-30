@@ -71,7 +71,7 @@ const ChartComponent = (props: any) => {
         // secondsVisible: false,
         tickMarkFormatter: (time: any) => {
           // console.log(time);
-          const dateString = moment.unix(time).format("HH:MM");
+          const dateString = moment.unix(time).format("YYYY/MM/DD HH:MM");
           // console.log(dateString);
           // const date = new Date(time.year, time.month, time.day);
           return dateString;
@@ -336,8 +336,6 @@ const Coins = () => {
     }, 500),
     []
   );
-  const localAAA = localStorage.getItem("aaa");
-  const aaa = localAAA && JSON.parse(localAAA);
   // const handleCoupleCoin = useCallback(
   //   debounce(async (range: string) => {
   //     try {
