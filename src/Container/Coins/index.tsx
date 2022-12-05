@@ -629,6 +629,7 @@ const Coins = () => {
   //   }, 500),
   //   []
   // );
+  const handleCloseDrawer = (status: boolean) => setOpenWatchList(status);
   useEffect(() => {
     setLoading(true);
     // handleCheckCoin();
@@ -654,6 +655,7 @@ const Coins = () => {
         <>
           <div className={styles.range}>
             <Button
+              className={styles.range__btn}
               onClick={() => setOpenWatchList(!openWatchList)}
               type="primary"
             >
@@ -661,12 +663,14 @@ const Coins = () => {
             </Button>
             {openWatchList && (
               <DrawerComponent
+                handleCloseDrawer={handleCloseDrawer}
                 list={listWatchedState}
                 setOpen={setOpenWatchList}
                 open={openWatchList}
               />
             )}
             <Radio.Group
+              className={styles.range__btn}
               onChange={(e) => {
                 const { value } = e.target;
                 const indexRange = Object.values(TimePeriod).findIndex(

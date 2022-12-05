@@ -3,6 +3,9 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  &__btn {
+    margin-bottom: 1rem;
+  }
 }
 .chart {
   &__heart {

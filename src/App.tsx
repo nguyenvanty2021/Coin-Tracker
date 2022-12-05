@@ -76,10 +76,12 @@ export const listTimeRange: TimeRangeProps<string>[] = [
 export const DrawerComponent = ({
   open,
   list,
+  handleCloseDrawer,
   setOpen,
 }: {
   open: boolean;
   list: ListWatchedProps[];
+  handleCloseDrawer: (status: boolean) => void;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const handleFormatCoin = (coin: number) =>
@@ -109,7 +111,7 @@ export const DrawerComponent = ({
       key: "link",
       render: (_, record) => (
         <a
-          // onClick={() => handleCloseDrawer(false)}
+          onClick={() => handleCloseDrawer(false)}
           href={`/coins/${record.coinFrom}/${record.coinTo}?range=1D`}
           rel="noreferrer"
           target="_blank"
