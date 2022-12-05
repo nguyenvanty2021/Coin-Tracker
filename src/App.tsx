@@ -73,7 +73,7 @@ export const listTimeRange: TimeRangeProps<string>[] = [
     value: TimeFilters.ALL,
   },
 ];
-const DrawerComponent = ({
+export const DrawerComponent = ({
   open,
   list,
   setOpen,
@@ -108,14 +108,14 @@ const DrawerComponent = ({
       dataIndex: "link",
       key: "link",
       render: (_, record) => (
-        <Link
-          to={{
-            pathname: `/coins/${record.coinFrom}/${record.coinTo}`,
-            search: `?range=1D`,
-          }}
+        <a
+          // onClick={() => handleCloseDrawer(false)}
+          href={`/coins/${record.coinFrom}/${record.coinTo}?range=1D`}
+          rel="noreferrer"
+          target="_blank"
         >
           Link
-        </Link>
+        </a>
       ),
     },
   ];
@@ -137,7 +137,6 @@ const DrawerComponent = ({
 };
 function App() {
   const queryParam = getQueryParam<any>();
-  const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [coin, setCoin] = useState<string>("");
   const local: any = localStorage?.getItem("listWatched");
@@ -381,18 +380,11 @@ function App() {
             <Col xs={24} sm={11} md={11} lg={11} xl={11}>
               <div className={styles.container__title__button}>
                 <Button
-                  onClick={() => setOpenWatchList(!openWatchList)}
+                  // onClick={() => setOpenWatchList(!openWatchList)}
                   type="primary"
                 >
                   My Watchlist
                 </Button>
-                {openWatchList && (
-                  <DrawerComponent
-                    list={listWatched}
-                    setOpen={setOpenWatchList}
-                    open={openWatchList}
-                  />
-                )}
               </div>
             </Col>
           </Row>

@@ -1,9 +1,14 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
-import { Radio } from "antd";
+import { Button, Radio } from "antd";
 import styles from "./styles.module.scss";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
-import { listTimeRange, ListWatchedProps, TimePeriod } from "../../App";
+import {
+  DrawerComponent,
+  listTimeRange,
+  ListWatchedProps,
+  TimePeriod,
+} from "../../App";
 import { DataProps } from "../../Components/PrimaryChart/interfaces";
 import { Status } from "../../Constants/enum";
 import { createChart, ColorType } from "lightweight-charts";
@@ -334,6 +339,7 @@ function debounce(fn: any, wait?: number) {
 const Coins = () => {
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const params = useParams();
+  const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const { height } = useWindowDimensions();
   const { from, to }: any = params;
   // const [idCoinCommon, setIdCoinCommon] = useState<{
@@ -647,6 +653,19 @@ const Coins = () => {
       {listChartModal?.length > 0 && (
         <>
           <div className={styles.range}>
+            <Button
+              onClick={() => setOpenWatchList(!openWatchList)}
+              type="primary"
+            >
+              My Watchlist
+            </Button>
+            {openWatchList && (
+              <DrawerComponent
+                list={listWatchedState}
+                setOpen={setOpenWatchList}
+                open={openWatchList}
+              />
+            )}
             <Radio.Group
               onChange={(e) => {
                 const { value } = e.target;
