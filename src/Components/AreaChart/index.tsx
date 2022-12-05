@@ -51,7 +51,7 @@ const AreaChart: React.FC<AreaChartProps> = ({
         <AxisBottom
           top={yMax}
           scale={xScale}
-          numTicks={width > 520 ? 10 : 5}
+          numTicks={width > 520 ? 0 : 5}
           stroke={AXIS_COLOR}
           tickStroke={AXIS_COLOR}
           tickLabelProps={() => AXIS_BOTTOM_TICK_LABEL_PROPS}

@@ -83,14 +83,14 @@ const SecondaryChart: React.FC<SecondaryChartProps> = ({
           yMax={yMax}
           xScale={dateScale}
           yScale={priceScale}
-          gradientColor="#26619C"
+          gradientColor="#2b4ac7"
         >
           <LinearGradient
             id="brush-gradient"
-            from="#808a9d"
-            fromOpacity={0.3}
-            to="#808a9d"
-            toOpacity={0.3}
+            from="#EFF3FF"
+            fromOpacity={0.5}
+            to="#DDE4FF"
+            toOpacity={0.25}
           />
 
           <Brush

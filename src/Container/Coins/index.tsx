@@ -13,6 +13,8 @@ import { useParams } from "react-router-dom";
 import { notify } from "../../Utils/notification";
 import numeral from "numeral";
 import moment from "moment";
+import SecondaryChart from "../../Components/SecondaryChart";
+import useWindowDimensions from "../../hooks/useWindowDimensions";
 // var formatters: any = {
 //   Dollar: function (price: any): any {
 //     return "$" + price.toFixed(4);
@@ -22,11 +24,28 @@ import moment from "moment";
 //   },
 // };
 const handleFormatCoin = (coin: number) => {
-  return coin < 0.01 ? 0.000001 : coin < 0.1 ? 0.00001 : coin < 10 ? 0.0001 : 1;
+  return coin < 0.01
+    ? 0.000001
+    : coin < 0.1
+    ? 0.00001
+    : coin < 10
+    ? 0.0001
+    : 0.01;
 };
+function formatAMPM(date: any) {
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  var ampm = hours >= 12 ? "pm" : "am";
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  var strTime = hours + ":" + minutes + " " + ampm;
+  return strTime;
+}
+
 // const formatterNames = Object.keys(formatters);
 const ChartComponent = (props: any) => {
-  const { data, from, to, range } = props;
+  const { data, range } = props;
   const colors: any = {
     backgroundColor: "white",
     lineColor: "#2962FF",
@@ -90,14 +109,41 @@ const ChartComponent = (props: any) => {
         // visible: true,
         // timeVisible: true,
         // secondsVisible: false,
+        // range !== "1D"
+        // ? "YYYY/MM/DD"
+        // : data[0].time === time || data[data.length - 1].time === time
+        // ? "YYYY/MM/DD HH:MM:ss"
+        // : "HH:MM:ss"
         tickMarkFormatter: (time: any) => {
-          // console.log(time);
-          const dateString = moment
-            .unix(time)
-            .format(range !== "1D" ? "YYYY/MM/DD" : "HH:MM");
-          // console.log(dateString);
-          // const date = new Date(time.year, time.month, time.day);
-          return dateString;
+          return range !== "1D"
+            ? new Date(
+                dateToString(time, "MM/DD/YYYY HH:MM:ss")
+              ).toLocaleString("en-US", {
+                day: "numeric",
+                month: "numeric",
+                year: "numeric",
+                hour12: true,
+              })
+            : data[0].time === time || data[data.length - 1].time === time
+            ? new Date(
+                dateToString(time, "MM/DD/YYYY HH:MM:ss")
+              ).toLocaleString("en-US", {
+                day: "numeric",
+                month: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+                hour12: true,
+              })
+            : new Date(
+                dateToString(time, "MM/DD/YYYY HH:MM:ss")
+              ).toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+                hour12: true,
+              });
         },
       },
       // grid: {
@@ -131,12 +177,12 @@ const ChartComponent = (props: any) => {
         precision:
           data?.length > 0
             ? priceFirst < 0.01
-              ? 6
+              ? 7
               : priceFirst < 0.1
               ? 5
               : priceFirst < 10
-              ? 4
-              : 0
+              ? 3
+              : 3
             : 0,
         minMove: handleFormatCoin(priceFirst),
       },
@@ -192,18 +238,16 @@ const ChartComponent = (props: any) => {
     // });
     newSeries.setData(data);
     const container: any = document.getElementById("container");
-
-    function dateToString(date: any) {
-      const dateString = moment.unix(date).format("YYYY/MM/DD HH:MM");
+    function dateToString(date: any, type: string) {
+      const dateString = moment.unix(date).format(type);
       return dateString;
     }
-
-    const toolTipWidth = 80;
+    const toolTipWidth = 90;
     const toolTipHeight = 120;
     const toolTipMargin = 45;
     // Create and style the tooltip html element
     const toolTip: any = document.createElement("div");
-    toolTip.style = `width: 155px; height: 100px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
+    toolTip.style = `width: 200px; height: 65px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
     toolTip.style.background = "white";
     toolTip.style.color = "black";
     toolTip.style.borderColor = "rgba( 38, 166, 154, 1)";
@@ -220,16 +264,31 @@ const ChartComponent = (props: any) => {
       ) {
         toolTip.style.display = "none";
       } else {
-        const dateStr = dateToString(param.time);
         toolTip.style.display = "block";
         const price = param.seriesPrices.get(newSeries);
-        toolTip.innerHTML = `<div style="color: ${"rgba( 38, 166, 154, 1)"}">${
-          from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`
-        }</div><div style="font-size: 24px; margin: 4px 0px; color: ${"black"}">
-			${Math.round(100 * price) / 100}
-			</div><div style="color: ${"black"}">
-			${dateStr}
-			</div>`;
+        toolTip.innerHTML = `<div style="display:flex; justify-content:space-between;" >
+          <b style="font-size:0.85rem;color:black;" >${dateToString(
+            param.time,
+            "MM/DD/YYYY"
+          )}</b>
+          <b style="color: #A0A7B5;font-size: 0.75rem;" >${new Date(
+            dateToString(param.time, "MM/DD/YYYY HH:MM:ss")
+          ).toLocaleString("en-US", {
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+            hour12: true,
+          })}</b>
+        </div>
+        <div style="display:flex;margin: 4px 0px;justify-content:flex-start;align-items:center;" >
+          <b style="color: #A0A7B5;font-size:0.85rem;" >Price:</b>
+          <b style="color: black;font-size: 1rem;margin-left: 0.25rem;">
+        $${price.toFixed(
+          price < 0.01 ? 7 : price < 0.1 ? 5 : price < 10 ? 3 : 3
+        )}
+        </b>
+        </div>
+        `;
 
         const y = param.point.y;
         let left = param.point.x + toolTipMargin;
@@ -289,7 +348,9 @@ function debounce(fn: any, wait?: number) {
   };
 }
 const Coins = () => {
+  const [boxWidth, setBoxWidth] = useState<number>(0);
   const params = useParams();
+  const { height } = useWindowDimensions();
   const { from, to }: any = params;
   // const [idCoinCommon, setIdCoinCommon] = useState<{
   //   from: string;
@@ -316,6 +377,7 @@ const Coins = () => {
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
   );
+  const [secondList, setSecondList] = useState<any>([]);
   const gridItemRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   // const indexRange = Object.keys(TimePeriod).findIndex(
@@ -344,11 +406,17 @@ const Coins = () => {
             );
             result.push(listCoinFrom[listCoinFrom.length - 1]);
             result.shift();
+            const listSecondTemp: any = [];
             const listTemp: any = [];
             result?.forEach((v: any, index: number) => {
               listTemp.push({
                 time: moment(v?.[0]).unix(),
                 value:
+                  parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
+              });
+              listSecondTemp.push({
+                date: new Date(v?.[0]),
+                price:
                   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
               });
               // console.log("coin1: ", parseFloat(v?.[1]));
@@ -358,8 +426,8 @@ const Coins = () => {
               //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
               // );
             });
+            setSecondList([...listSecondTemp]);
             setListChartModal([...listTemp]);
-
             handleSetLocalStorage();
           } else if (listCoinFrom?.length < listCoinTo?.length) {
             // listCoinTo.length = listCoinFrom.length;
@@ -369,11 +437,16 @@ const Coins = () => {
             );
             result.push(listCoinTo[listCoinTo.length - 1]);
             result.shift();
+            const listSecondTemp: any = [];
             const listTemp: any = [];
             listCoinFrom?.forEach((v: any, index: number) => {
               listTemp.push({
                 time: moment(v?.[0]).unix(),
                 value: parseFloat(v?.[1]) / parseFloat(result?.[index]?.[1]),
+              });
+              listSecondTemp.push({
+                date: new Date(v?.[0]),
+                price: parseFloat(v?.[1]) / parseFloat(result?.[index]?.[1]),
               });
               // console.log("coin1: ", parseFloat(v?.[1]));
               // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
@@ -382,15 +455,21 @@ const Coins = () => {
               //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
               // );
             });
+            setSecondList([...listSecondTemp]);
             setListChartModal([...listTemp]);
-
             handleSetLocalStorage();
           } else {
             const listTemp: any = [];
+            const listSecondTemp: any = [];
             listCoinFrom?.forEach((v: any, index: number) => {
               listTemp.push({
                 time: moment(v?.[0]).unix(),
                 value:
+                  parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
+              });
+              listSecondTemp.push({
+                date: new Date(v?.[0]),
+                price:
                   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
               });
               // console.log("coin1: ", parseFloat(v?.[1]));
@@ -400,8 +479,8 @@ const Coins = () => {
               //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
               // );
             });
+            setSecondList([...listSecondTemp]);
             setListChartModal([...listTemp]);
-
             handleSetLocalStorage();
           }
         } else {
@@ -566,6 +645,18 @@ const Coins = () => {
     handleCoupleCoin(Object.values(TimePeriod)[indexRange]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    const handleResize = (width?: number) => {
+      setBoxWidth(width || 0);
+    };
+    handleResize(gridItemRef.current?.clientWidth || 0);
+    window.addEventListener("resize", () =>
+      handleResize(gridItemRef?.current?.clientWidth || 0)
+    );
+    return () => {
+      window.removeEventListener("resize", () => handleResize());
+    };
+  }, [gridItemRef]);
   return (
     <div className={styles.coins} ref={gridItemRef}>
       {loading && <Loading />}
@@ -602,7 +693,7 @@ const Coins = () => {
           </div>
           <div className={styles.coins__title}>
             <h3>
-              <b>
+              <b style={{ marginRight: "0.35rem" }}>
                 {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}
               </b>
               Pair Chart
@@ -637,7 +728,18 @@ const Coins = () => {
             to={to}
             range={queryParam["range"]}
             data={listChartModal?.length > 0 ? listChartModal : []}
-          ></ChartComponentHOC>
+          />
+          <SecondaryChart
+            data={secondList?.length > 0 ? secondList : []}
+            height={Math.floor(height * 0.1)}
+            width={boxWidth}
+            margin={{
+              top: 10,
+              right: 0,
+              bottom: 0,
+              left: 0,
+            }}
+          />
         </>
       )}
     </div>
