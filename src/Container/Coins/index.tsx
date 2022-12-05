@@ -32,16 +32,6 @@ const handleFormatCoin = (coin: number) => {
     ? 0.0001
     : 0.01;
 };
-function formatAMPM(date: any) {
-  var hours = date.getHours();
-  var minutes = date.getMinutes();
-  var ampm = hours >= 12 ? "pm" : "am";
-  hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
-  minutes = minutes < 10 ? "0" + minutes : minutes;
-  var strTime = hours + ":" + minutes + " " + ampm;
-  return strTime;
-}
 
 // const formatterNames = Object.keys(formatters);
 const ChartComponent = (props: any) => {
@@ -70,6 +60,7 @@ const ChartComponent = (props: any) => {
       // handleScroll: {
       //   vertTouchDrag: false,
       // },
+
       rightPriceScale: {
         scaleMargins: {
           top: 0.3,
@@ -80,14 +71,7 @@ const ChartComponent = (props: any) => {
       },
       crosshair: {
         // hide the horizontal crosshair line
-        horzLine: {
-          visible: false,
-          labelVisible: false,
-        },
         // hide the vertical crosshair label
-        vertLine: {
-          labelVisible: false,
-        },
       },
       // hide the grid lines
       grid: {
