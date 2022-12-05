@@ -717,6 +717,7 @@ const Coins = () => {
             data={secondList?.length > 0 ? secondList : []}
             height={Math.floor(height * 0.1)}
             width={boxWidth}
+            setListChartModal={setListChartModal}
             margin={{
               top: 10,
               right: 0,

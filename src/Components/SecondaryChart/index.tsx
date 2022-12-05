@@ -10,10 +10,12 @@ import { SC } from "./styled";
 import { DataProps } from "../PrimaryChart/interfaces";
 import AreaChart from "../AreaChart";
 import { MarketContext } from "../../store/MarketProvider";
+import moment from "moment";
 
 const SecondaryChart: React.FC<SecondaryChartProps> = ({
   data,
   width = 10,
+  setListChartModal,
   height,
   margin = { top: 0, right: 0, bottom: 0, left: 0 },
 }) => {
@@ -21,11 +23,9 @@ const SecondaryChart: React.FC<SecondaryChartProps> = ({
     filteredDataState: { setFilteredData },
   } = React.useContext(MarketContext);
   const brushRef = React.useRef<BaseBrush | null>(null);
-
   // bounds
   const xMax = Math.max(width - margin.left - margin.right, 0);
   const yMax = Math.max(height - margin.top - margin.bottom, 0);
-
   // accessors
   const getDate = (d: DataProps) => new Date(d.date);
   const getStockValue = (d: DataProps) => d.price;
@@ -68,10 +68,15 @@ const SecondaryChart: React.FC<SecondaryChartProps> = ({
       const y = getStockValue(s);
       return x > x0 && x < x1 && y > y0 && y < y1;
     });
-
+    const listRefactor = filteredData.map((values) => {
+      return {
+        time: moment(values.date).unix(),
+        value: values.price,
+      };
+    });
+    setListChartModal([...listRefactor]);
     setFilteredData(filteredData);
   };
-
   return (
     <SC.DivComp>
       <svg width={width} height={height}>
