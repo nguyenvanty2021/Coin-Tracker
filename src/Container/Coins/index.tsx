@@ -5,8 +5,10 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
 import {
   DrawerComponent,
+  handleFormatCoinPrice,
   listTimeRange,
   ListWatchedProps,
+  notifyTime,
   TimePeriod,
 } from "../../App";
 import { DataProps } from "../../Components/PrimaryChart/interfaces";
@@ -20,14 +22,6 @@ import numeral from "numeral";
 import moment from "moment";
 import SecondaryChart from "../../Components/SecondaryChart";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
-// var formatters: any = {
-//   Dollar: function (price: any): any {
-//     return "$" + price.toFixed(4);
-//   },
-//   Pound: function (price: any): any {
-//     return "\u00A3" + price.toFixed(4);
-//   },
-// };
 const handleFormatCoin = (coin: number) => {
   return coin < 0.01
     ? 0.000001
@@ -37,10 +31,23 @@ const handleFormatCoin = (coin: number) => {
     ? 0.0001
     : 0.01;
 };
-
-// const formatterNames = Object.keys(formatters);
+const timeDebounce = 400;
+function debounce(fn: any, wait?: number) {
+  let timerId: any, lastArguments: any, lastThis: any;
+  return (...args: any) => {
+    timerId && clearTimeout(timerId);
+    lastArguments = args;
+    //@ts-ignore
+    lastThis = this;
+    timerId = setTimeout(function () {
+      fn.apply(lastThis, lastArguments);
+      timerId = null;
+    }, wait || timeDebounce);
+  };
+}
 const ChartComponent = (props: any) => {
   const { data, range } = props;
+  const heightDefault = 300;
   const colors: any = {
     backgroundColor: "white",
     lineColor: "#2962FF",
@@ -62,23 +69,12 @@ const ChartComponent = (props: any) => {
         background: { type: ColorType.Solid, color: colors.backgroundColor },
         textColor: colors.textColor,
       },
-      // handleScroll: {
-      //   vertTouchDrag: false,
-      // },
-
       rightPriceScale: {
         scaleMargins: {
           top: 0.3,
           bottom: 0.25,
         },
-        // borderVisible: false,
-        // width: 50,
       },
-      crosshair: {
-        // hide the horizontal crosshair line
-        // hide the vertical crosshair label
-      },
-      // hide the grid lines
       grid: {
         vertLines: {
           visible: false,
@@ -88,21 +84,6 @@ const ChartComponent = (props: any) => {
         },
       },
       timeScale: {
-        // rightOffset: 12,
-        // barSpacing: 3,
-        // fixLeftEdge: true,
-        // lockVisibleTimeRangeOnResize: true,
-        // rightBarStaysOnScroll: true,
-        // borderVisible: false,
-        // borderColor: "#fff000",
-        // visible: true,
-        // timeVisible: true,
-        // secondsVisible: false,
-        // range !== "1D"
-        // ? "YYYY/MM/DD"
-        // : data[0].time === time || data[data.length - 1].time === time
-        // ? "YYYY/MM/DD HH:MM:ss"
-        // : "HH:MM:ss"
         tickMarkFormatter: (time: any) => {
           return range !== "1D"
             ? new Date(
@@ -135,96 +116,22 @@ const ChartComponent = (props: any) => {
               });
         },
       },
-      // grid: {
-      //   vertLines: {
-      //     color: "rgba(70, 130, 180, 0.5)",
-      //     style: 1, // 1.Solid; 2.Dotted; 3.Dashed; 4.LargeDashed; 5.SparseDotted
-      //     visible: true,
-      //   },
-      //   horzLines: {
-      //     color: "rgba(70, 130, 180, 0.5);",
-      //     style: 1, // 1.Solid; 2.Dotted; 3.Dashed; 4.LargeDashed; 5.SparseDotted
-      //     visible: true,
-      //   },
-      // },
-      // watermark: {
-      //   horzAlign: "center",
-      //   vertAlign: "top",
-      // },
-
-      // localization: {
-      //   dateFormat: "MM/dd/yy",
-      //   locale: "en-US",
-      // },
       width: chartContainerRef.current.clientWidth,
-      height: 300,
+      height: heightDefault,
     });
     chart.timeScale().fitContent();
     let newSeries = chart.addAreaSeries({
       priceFormat: {
         type: "price",
-        precision:
-          data?.length > 0
-            ? priceFirst < 0.01
-              ? 7
-              : priceFirst < 0.1
-              ? 5
-              : priceFirst < 10
-              ? 3
-              : 3
-            : 0,
+        precision: data?.length > 0 ? handleFormatCoinPrice(priceFirst) : 0,
         minMove: handleFormatCoin(priceFirst),
       },
-      // crosshairMarkerVisible: false,
-      // crosshairMarkerRadius: 3,
       lineWidth: 2,
-      // lineType: 6,
       crossHairMarkerVisible: false,
       lineColor: colors.lineColor,
       topColor: colors.areaTopColor,
       bottomColor: colors.areaBottomColor,
     });
-
-    // export const handleFormatCoin = (coin: number) => {
-    //   return coin < 0.01
-    //     ? "0,0.000000"
-    //     : coin < 0.1
-    //     ? "0,0.00000"
-    //     : coin < 10
-    //     ? "0,0.0000"
-    //     : "0,0.000";
-    // };
-    // var volumeSeries = chart.addHistogramSeries({
-    //   color: "#26a69a",
-    //   priceFormat: {
-    //     type: "volume",
-    //   },
-    //   priceScaleId: "",
-    //   scaleMargins: {
-    //     top: 0.8,
-    //     bottom: 0,
-    //   },
-    // });
-    // newSeries = chart.addLineSeries({
-    //   // or right
-    //   priceScaleId: "left",
-    //   // chart title
-    //   title: "Series title example",
-    //   // top & bottom margins
-    //   scaleMargins: {
-    //     top: 0.1,
-    //     bottom: 0.3,
-    //   },
-    //   // overrides autoscale
-    //   autoscaleInfoProvider: () => {
-    //     return {
-    //       priceRange: {
-    //         minValue: 0,
-    //         maxValue: 100,
-    //       },
-    //     };
-    //   },
-    // });
     newSeries.setData(data);
     const container: any = document.getElementById("container");
     function dateToString(date: any, type: string) {
@@ -278,13 +185,11 @@ const ChartComponent = (props: any) => {
         </b>
         </div>
         `;
-
         const y = param.point.y;
         let left = param.point.x + toolTipMargin;
         if (left > container.clientWidth - toolTipWidth) {
           left = param.point.x - toolTipMargin - toolTipWidth;
         }
-
         let top = y + toolTipMargin;
         if (top > container.clientHeight - toolTipHeight) {
           top = y - toolTipHeight - toolTipMargin;
@@ -293,16 +198,6 @@ const ChartComponent = (props: any) => {
         toolTip.style.top = top + "px";
       }
     });
-    // const barsInfo = newSeries.barsInLogicalRange(
-    //   chart.timeScale().getVisibleLogicalRange()
-    // );
-    // console.log(barsInfo);
-    // // take a screenshot
-    // chart.takeScreenshot();
-    // // two functions to access this price scale implicitly
-    // const coordinate = newSeries.priceToCoordinate(100.5);
-    // const price = newSeries.coordinateToPrice(324);
-    // volumeSeries.setData(data);
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -323,32 +218,12 @@ const ChartComponent = (props: any) => {
   );
 };
 const ChartComponentHOC = memo(ChartComponent);
-function debounce(fn: any, wait?: number) {
-  let timerId: any, lastArguments: any, lastThis: any;
-  return (...args: any) => {
-    timerId && clearTimeout(timerId);
-    lastArguments = args;
-    //@ts-ignore
-    lastThis = this;
-    timerId = setTimeout(function () {
-      fn.apply(lastThis, lastArguments);
-      timerId = null;
-    }, wait || 400);
-  };
-}
 const Coins = () => {
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const params = useParams();
   const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   const { height } = useWindowDimensions();
   const { from, to }: any = params;
-  // const [idCoinCommon, setIdCoinCommon] = useState<{
-  //   from: string;
-  //   to: string;
-  // }>({
-  //   from: "",
-  //   to: "",
-  // });
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
   const [listWatchedState, setListWatchedState] = useState<ListWatchedProps[]>(
@@ -370,9 +245,6 @@ const Coins = () => {
   const [secondList, setSecondList] = useState<any>([]);
   const gridItemRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  // const indexRange = Object.keys(TimePeriod).findIndex(
-  //   (values) => values === queryParam["range"]
-  // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleCoupleCoin = useCallback(
     debounce(async (range: string) => {
@@ -409,18 +281,11 @@ const Coins = () => {
                 price:
                   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
               });
-              // console.log("coin1: ", parseFloat(v?.[1]));
-              // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
-              // console.log(
-              //   "result: ",
-              //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
-              // );
             });
             setSecondList([...listSecondTemp]);
             setListChartModal([...listTemp]);
             handleSetLocalStorage();
           } else if (listCoinFrom?.length < listCoinTo?.length) {
-            // listCoinTo.length = listCoinFrom.length;
             const result = listCoinTo.slice(
               listCoinTo.length - listCoinFrom.length - 1,
               -1
@@ -438,12 +303,6 @@ const Coins = () => {
                 date: new Date(v?.[0]),
                 price: parseFloat(v?.[1]) / parseFloat(result?.[index]?.[1]),
               });
-              // console.log("coin1: ", parseFloat(v?.[1]));
-              // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
-              // console.log(
-              //   "result: ",
-              //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
-              // );
             });
             setSecondList([...listSecondTemp]);
             setListChartModal([...listTemp]);
@@ -462,97 +321,22 @@ const Coins = () => {
                 price:
                   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1]),
               });
-              // console.log("coin1: ", parseFloat(v?.[1]));
-              // console.log("coin2: ", parseFloat(listCoinTo?.[index]?.[1]));
-              // console.log(
-              //   "result: ",
-              //   parseFloat(v?.[1]) / parseFloat(listCoinTo?.[index]?.[1])
-              // );
             });
             setSecondList([...listSecondTemp]);
             setListChartModal([...listTemp]);
             handleSetLocalStorage();
           }
         } else {
-          notify("error", "Pair of Coins is not valid!", 1500);
+          notify("error", "Pair of Coins is not valid!", notifyTime);
         }
       } catch (error) {
-        notify("error", "Error!", 1500);
+        notify("error", "Error!", notifyTime);
       } finally {
         setLoading(false);
       }
-    }, 500),
+    }, timeDebounce),
     []
   );
-  // const handleCoupleCoin = useCallback(
-  //   debounce(async (range: string) => {
-  //     try {
-  //       const listRespon = await Promise.all([
-  //         coinApi.getAllCoinCouple(from.toLowerCase(), range),
-  //         coinApi.getAllCoinCouple(to.toLowerCase(), range),
-  //       ]);
-  //       if (
-  //         listRespon.length === 2 &&
-  //         listRespon[0]?.data?.prices?.length > 0 &&
-  //         listRespon[1]?.data?.prices?.length > 0
-  //       ) {
-  //         const listTemp: any = [];
-  //         listRespon[0].data.prices.forEach((v: any, index: number) => {
-  //           listTemp.push({
-  //             date: new Date(v[0]),
-  //             price:
-  //               parseFloat(v[1]) /
-  //               parseFloat(listRespon[1].data.prices[index][1]),
-  //           });
-  //         });
-  //         // setIdCoinCommon({
-  //         //   ...idCoinCommon,
-  //         //   from: from,
-  //         //   to: nameCoinTo,
-  //         // });
-  //         setListChartModal([...listTemp]);
-  //         handleSetLocalStorage();
-  //       } else {
-  //         notify("error", "Pair of Coins is not valid!", 1500);
-  //       }
-  //     } catch (error) {
-  //       notify("error", "Error!", 1500);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }, 500),
-  //   []
-  // );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // const handleGetAllCoin = useCallback(
-  //   debounce(async (idCoinFrom: string, nameCoinTo: string, value: string) => {
-  //     try {
-  //       const res = await coinApi.getAllCoin(
-  //         idCoinFrom,
-  //         nameCoinTo.toLowerCase(),
-  //         value
-  //       );
-  //       if (res.status === Status.SUCCESS) {
-
-  //         const result =
-  //           res?.data?.prices?.length > 0
-  //             ? res.data.prices.map((values: number[]) => {
-  //                 return {
-  //                   date: new Date(values[0]),
-  //                   price: values[1],
-  //                 };
-  //               })
-  //             : [];
-
-  //       }
-  //     } catch (error) {
-  //       notify("error", "Error!", 1500);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }, 500),
-  //   []
-  // );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSetLocalStorage = useCallback(
     debounce(async () => {
@@ -587,10 +371,10 @@ const Coins = () => {
             localStorage.setItem("listWatched", JSON.stringify(listTemp));
           }
         } catch (error) {
-          notify("error", "Error!", 1500);
+          notify("error", "Error!", notifyTime);
         }
       }
-    }, 500),
+    }, timeDebounce),
     []
   );
   const handleUpdateStatusHeart = () => {
@@ -599,36 +383,6 @@ const Coins = () => {
     listTemp[indexHeart].watched = !statusHeart;
     localStorage.setItem("listWatched", JSON.stringify(listTemp));
   };
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // const handleCheckCoin = useCallback(
-  //   debounce(async () => {
-  //     try {
-  //       const listRespon = await Promise.all([
-  //         coinApi.getCoinByName(from.toLowerCase()),
-  //         coinApi.getCoinByName(to.toLowerCase()),
-  //       ]);
-  //       if (
-  //         listRespon.length === 2 &&
-  //         listRespon[0]?.data?.coins?.length > 0 &&
-  //         listRespon[1]?.data?.coins?.length > 0
-  //       ) {
-  //         handleGetAllCoin(
-  //           listRespon[0].data.coins[0].id,
-  //           listRespon[1].data.coins[0].symbol,
-  //           Object.values(TimePeriod)[indexRange]
-  //         );
-  //         handleSetLocalStorage();
-  //       } else {
-  //         notify("error", "Pair of Coins is not valid!", 1500);
-  //         setLoading(false);
-  //       }
-  //     } catch (error) {
-  //       notify("error", "Error!", 1500);
-  //       setLoading(false);
-  //     }
-  //   }, 500),
-  //   []
-  // );
   const handleCloseDrawer = (status: boolean) => setOpenWatchList(status);
   useEffect(() => {
     setLoading(true);
@@ -716,19 +470,6 @@ const Coins = () => {
                 className={styles.chart__heart}
               />
             )}
-          </div>
-          <div className={styles.chart}>
-            {/* <PrimaryChart
-              data={listChartModal}
-              height={Math.floor(height * 0.4)}
-              width={boxWidth}
-              margin={{
-                top: 16,
-                right: 16,
-                bottom: 40,
-                left: 48,
-              }}
-            /> */}
           </div>
           <ChartComponentHOC
             from={from}

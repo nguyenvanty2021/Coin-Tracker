@@ -31,6 +31,7 @@ export interface ListWatchedProps {
   priceCoinFrom: string;
   priceCoinTo: string;
 }
+export const notifyTime = 1500;
 export const TimePeriod: {
   [key: string]: TimeFilters;
 } = {
@@ -73,6 +74,8 @@ export const listTimeRange: TimeRangeProps<string>[] = [
     value: TimeFilters.ALL,
   },
 ];
+export const handleFormatCoinPrice = (coin: number) =>
+  coin < 0.001 ? 7 : coin < 0.01 ? 5 : coin < 10 ? 3 : 3;
 export const DrawerComponent = ({
   open,
   list,
@@ -84,8 +87,6 @@ export const DrawerComponent = ({
   handleCloseDrawer: (status: boolean) => void;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const handleFormatCoin = (coin: number) =>
-    coin < 0.001 ? 7 : coin < 0.01 ? 5 : coin < 10 ? 3 : 3;
   const columns: ColumnsType<ListWatchedProps> = [
     {
       title: "Pair",
@@ -102,7 +103,7 @@ export const DrawerComponent = ({
       render: (_, record) => {
         const total =
           parseFloat(record.priceCoinFrom) / parseFloat(record.priceCoinTo);
-        return <p>{`${total.toFixed(handleFormatCoin(total))}`}</p>;
+        return <p>{`${total.toFixed(handleFormatCoinPrice(total))}`}</p>;
       },
     },
     {
@@ -182,86 +183,6 @@ function App() {
     });
     setListCheck([]);
   };
-  // const getCoinByName = async (
-  //   coinName: string,
-  //   coinToData: string,
-  //   idCoinFrom: string,
-  //   timeRange: string,
-  //   priceCoinFrom: string,
-  //   priceCoinTo: string,
-  //   countTemp: number,
-  //   result: string[]
-  // ) => {
-  //   try {
-  //     setLoading(true);
-  //     const res = await coinApi.getCoinByName(coinName);
-  //     if (
-  //       res.status === Status.SUCCESS &&
-  //       result.length === 2 &&
-  //       index > -1 &&
-  //       res?.data?.coins?.length > 0
-  //     ) {
-  //       const coinTo = coinToData.toLowerCase();
-  //       const listKeys = Object.keys(TimePeriod);
-  //       setCoin(`${idCoinFrom}${coinTo}`);
-  //       updateUrl("range", listKeys[index]);
-  //       // localStorage.setItem(
-  //       //   "listWatched",
-  //       //   JSON.stringify([
-  //       //     {
-  //       //       coinFrom,
-  //       //       coinTo,
-  //       //       idCoinFrom,
-  //       //       watched: false,
-  //       //     },
-  //       //   ])
-  //       // );
-  //       if (listWatched?.length > 0) {
-  //         const founded = listWatched.every(
-  //           (el) => `${el.coinFrom}${el.coinTo}` !== `${idCoinFrom}${coinTo}`
-  //         );
-  //         if (founded) {
-  //           listWatched.push({
-  //             coinFrom: idCoinFrom,
-  //             coinTo,
-  //             idCoinFrom,
-  //             watched: false,
-  //             priceCoinFrom,
-  //             priceCoinTo,
-  //           });
-  //           localStorage.setItem("listWatched", JSON.stringify(listWatched));
-  //         }
-  //       } else {
-  //         localStorage.setItem(
-  //           "listWatched",
-  //           JSON.stringify([
-  //             {
-  //               coinFrom: idCoinFrom,
-  //               coinTo,
-  //               idCoinFrom,
-  //               watched: false,
-  //               priceCoinFrom,
-  //               priceCoinTo,
-  //             },
-  //           ])
-  //         );
-  //       }
-  //       setIdCommon({
-  //         ...idCommon,
-  //         countCheckEror: countTemp,
-  //         idCoinFromState: res.data.coins[0].id,
-  //       });
-  //       notify("success", "Generate URL Successfully!", 1500);
-  //     } else {
-  //       notify("warning", "Pair of Coins is not valid!", 1500);
-  //       setIdCommon({ ...idCommon, countCheckEror: 0 });
-  //     }
-  //   } catch (error) {
-  //     notify("warning", "Pair of Coins is not valid!", 1500);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const onSubmit: SubmitHandler<FormProps<string>> = async (
     object: FormProps<string>
   ) => {
@@ -297,25 +218,12 @@ function App() {
           listRespon[0]?.data?.coins?.length > 0 &&
           listRespon[1]?.data?.coins?.length > 0
         ) {
-          // const coinTo = result[1].toLowerCase();
-          // const coinFrom = result[0].toLowerCase();
           const listKeys = Object.keys(TimePeriod);
           setCoin(
             `${listRespon[0].data.coins[0].id}${listRespon[1].data.coins[0].id}`
           );
           setListCheck(listRespon);
           updateUrl("range", listKeys[index]);
-          // localStorage.setItem(
-          //   "listWatched",
-          //   JSON.stringify([
-          //     {
-          //       coinFrom,
-          //       coinTo,
-          //       idCoinFrom,
-          //       watched: false,
-          //     },
-          //   ])
-          // );
           if (listWatched?.length > 0) {
             const founded = listWatched.every(
               (el) =>
@@ -348,24 +256,14 @@ function App() {
               ])
             );
           }
-          notify("success", "Generate URL Successfully!", 1500);
+          notify("success", "Generate URL Successfully!", notifyTime);
         } else {
-          notify("warning", "Pair of Coins is not valid!", 1500);
+          notify("warning", "Pair of Coins is not valid!", notifyTime);
           setListCheck([]);
         }
-        // await getCoinByName(
-        //   result[0],
-        //   result[1],
-        //   idCoinFrom,
-        //   object?.timeRange || "",
-        //   priceCoinFrom,
-        //   priceCoinTo,
-        //   countTemp,
-        //   result
-        // );
       }
     } catch (error) {
-      notify("error", "Error!", 1500);
+      notify("error", "Error!", notifyTime);
     } finally {
       setLoading(false);
     }
@@ -380,14 +278,9 @@ function App() {
               <h2>Generate chart too</h2>
             </Col>
             <Col xs={24} sm={11} md={11} lg={11} xl={11}>
-              <div className={styles.container__title__button}>
-                <Button
-                  // onClick={() => setOpenWatchList(!openWatchList)}
-                  type="primary"
-                >
-                  My Watchlist
-                </Button>
-              </div>
+              {/* <div className={styles.container__title__button}>
+                <Button type="primary">My Watchlist</Button>
+              </div> */}
             </Col>
           </Row>
           <Row className={styles.container__item}>
@@ -432,17 +325,6 @@ function App() {
                   </button>
                 </div>
                 {listCheck?.length === 2 && (
-                  // <Button
-                  //   // onClick={() => {
-                  //   //   history.push({
-                  //   //     pathname: `/coins/${queryParam["coinFrom"]}/${queryParam["coinTo"]}`,
-                  //   //     search: queryParam,
-                  //   //   });
-                  //   // }}
-                  //   type="link"
-                  // >
-                  //   Generated Link
-                  // </Button>
                   <Link
                     to={{
                       pathname: `/coins/${objectCoin["coinFrom"]}/${objectCoin["coinTo"]}`,
