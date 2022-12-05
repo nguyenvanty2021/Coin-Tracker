@@ -49,7 +49,7 @@ const SecondaryChart: React.FC<SecondaryChartProps> = ({
   const initialBrushPosition = React.useMemo(
     () => ({
       start: { x: dateScale(getDate(data[0])) },
-      end: { x: dateScale(getDate(data[data.length - 1])) },
+      end: { x: dateScale(getDate(data[data.length - 1])) - 250 },
     }),
     [dateScale, data]
   );
