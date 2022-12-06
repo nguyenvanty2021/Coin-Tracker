@@ -1,4 +1,4 @@
-import { Button, Col, Row, Drawer, Table } from "antd";
+import { Button, Col, Row, Table } from "antd";
 import styles from "./App.module.scss";
 import InputComponent from "./Components/Input/index";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -77,10 +77,8 @@ export const listTimeRange: TimeRangeProps<string>[] = [
 export const handleFormatCoinPrice = (coin: number) =>
   coin < 0.001 ? 7 : coin < 0.01 ? 5 : coin < 10 ? 3 : 3;
 export const DrawerComponent = ({
-  open,
   list,
   handleCloseDrawer,
-  setOpen,
 }: {
   open: boolean;
   list: ListWatchedProps[];
@@ -123,19 +121,12 @@ export const DrawerComponent = ({
     },
   ];
   return (
-    <Drawer
-      width="100%"
-      title="My Watchlist"
-      placement="right"
-      onClose={() => setOpen(false)}
-      open={open}
-    >
-      <Table
-        columns={columns}
-        bordered
-        dataSource={list?.length > 0 ? list.filter((v) => v.watched) : []}
-      />
-    </Drawer>
+    <Table
+      className={styles.table}
+      columns={columns}
+      bordered
+      dataSource={list?.length > 0 ? list.filter((v) => v.watched) : []}
+    />
   );
 };
 function App() {

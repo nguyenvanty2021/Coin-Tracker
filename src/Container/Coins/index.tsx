@@ -408,21 +408,13 @@ const Coins = () => {
       {listChartModal?.length > 0 && (
         <>
           <div className={styles.range}>
-            <Button
+            {/* <Button
               className={styles.range__btn}
               onClick={() => setOpenWatchList(!openWatchList)}
               type="primary"
             >
               My Watchlist
-            </Button>
-            {openWatchList && (
-              <DrawerComponent
-                handleCloseDrawer={handleCloseDrawer}
-                list={listWatchedState}
-                setOpen={setOpenWatchList}
-                open={openWatchList}
-              />
-            )}
+            </Button> */}
             <Radio.Group
               className={styles.range__btn}
               onChange={(e) => {
@@ -488,6 +480,13 @@ const Coins = () => {
               bottom: 0,
               left: 0,
             }}
+          />
+          <h3 className={styles.title}>My Watchlist</h3>
+          <DrawerComponent
+            handleCloseDrawer={handleCloseDrawer}
+            list={listWatchedState}
+            setOpen={setOpenWatchList}
+            open={openWatchList}
           />
         </>
       )}

@@ -1,11 +1,14 @@
 .range {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex-wrap: wrap;
   &__btn {
     margin-bottom: 1rem;
   }
+}
+.title {
+  margin-top: 20px;
 }
 .chart {
   &__heart {
