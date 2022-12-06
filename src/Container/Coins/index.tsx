@@ -139,7 +139,7 @@ const ChartComponent = (props: any) => {
     }
     const toolTipWidth = 160;
     const toolTipHeight = 0;
-    const toolTipMargin = 70;
+    const toolTipMargin = 0;
     // Create and style the tooltip html element
     const toolTip: any = document.createElement("div");
     toolTip.style = `width: 200px; height: 65px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
