@@ -87,7 +87,6 @@ export const DrawerComponent = ({
   coinCurrent: string;
   handleCloseDrawer: (status: boolean) => void;
 }) => {
-  console.log(priceCurrent);
   const columns: ColumnsType<ListWatchedProps> = [
     {
       title: "Pair",
