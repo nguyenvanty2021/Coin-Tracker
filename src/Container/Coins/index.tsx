@@ -137,7 +137,7 @@ const ChartComponent = (props: any) => {
       const dateString = moment.unix(date).format(type);
       return dateString;
     }
-    const toolTipWidth = 0;
+    const toolTipWidth = 160;
     const toolTipHeight = 0;
     const toolTipMargin = 70;
     // Create and style the tooltip html element
