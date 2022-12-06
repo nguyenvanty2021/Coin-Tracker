@@ -129,10 +129,11 @@ export const DrawerComponent = ({
   ];
   return (
     <Row>
-      <Col xs={24} sm={24} md={16} lg={8} xl={8}>
+      <Col xs={24} sm={24} md={12} lg={6} xl={6}>
         <Table
           className={styles.table}
           columns={columns}
+          pagination={false}
           bordered
           dataSource={list?.length > 0 ? list.filter((v) => v.watched) : []}
         />
@@ -162,8 +163,8 @@ function App() {
       indexRange > -1
         ? Object.values(TimePeriod)[indexRange]
         : listTimeRange?.length > 0
-        ? listTimeRange[0].value
-        : "1",
+        ? listTimeRange[listTimeRange.length - 2].value
+        : TimeFilters.P1Y,
   };
   const yupSchemaFindNewCV = yup.object().shape({
     pairOfCoin: yup.string().required("You have not entered pair of coin"),
@@ -181,7 +182,7 @@ function App() {
     methods.reset({
       ...defaultValues,
       pairOfCoin: "",
-      timeRange: TimePeriod["1D"],
+      timeRange: TimePeriod["1Y"],
     });
     setListCheck([]);
   };
