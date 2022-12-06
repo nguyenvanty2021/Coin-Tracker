@@ -11,7 +11,6 @@ import {
   notifyTime,
   TimePeriod,
 } from "../../App";
-import { DataProps } from "../../Components/PrimaryChart/interfaces";
 import { Status } from "../../Constants/enum";
 import { createChart, ColorType } from "lightweight-charts";
 import { getQueryParam, updateUrl } from "../../Utils/query";
@@ -238,7 +237,7 @@ const Coins = () => {
   const [statusHeart, setStatusHeart] = useState<boolean>(
     indexHeart > -1 ? listWatchedState[indexHeart].watched : false
   );
-  const [listChartModal, setListChartModal] = useState<DataProps[]>([]);
+  const [listChartModal, setListChartModal] = useState<any[]>([]);
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
   );
@@ -482,12 +481,17 @@ const Coins = () => {
             }}
           />
           <h3 className={styles.title}>My Watchlist</h3>
-
           <DrawerComponent
+            coinCurrent={
+              from && to && `${from.toUpperCase()}/${to.toUpperCase()}`
+            }
+            priceCurrent={
+              listChartModal?.length > 0
+                ? listChartModal[listChartModal.length - 1].value
+                : 0
+            }
             handleCloseDrawer={handleCloseDrawer}
             list={listWatchedState}
-            setOpen={setOpenWatchList}
-            open={openWatchList}
           />
         </>
       )}
