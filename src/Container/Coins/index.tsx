@@ -1,5 +1,5 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
-import { Button, Radio } from "antd";
+import { Radio } from "antd";
 import styles from "./styles.module.scss";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import coinApi from "../../Api/coinApi";
@@ -482,6 +482,7 @@ const Coins = () => {
             }}
           />
           <h3 className={styles.title}>My Watchlist</h3>
+
           <DrawerComponent
             handleCloseDrawer={handleCloseDrawer}
             list={listWatchedState}

@@ -91,7 +91,14 @@ export const DrawerComponent = ({
       dataIndex: "pairOfCoins",
       key: "pairOfCoins",
       render: (_, record) => (
-        <div>{`${record.coinFrom}/${record.coinTo}`.toUpperCase()}</div>
+        <a
+          onClick={() => handleCloseDrawer(false)}
+          href={`/coins/${record.coinFrom}/${record.coinTo}?range=1D`}
+          rel="noreferrer"
+          target="_parent"
+        >
+          {`${record.coinFrom}/${record.coinTo}`.toUpperCase()}
+        </a>
       ),
     },
     {
@@ -104,29 +111,33 @@ export const DrawerComponent = ({
         return <p>{`${total.toFixed(handleFormatCoinPrice(total))}`}</p>;
       },
     },
-    {
-      title: "Link",
-      dataIndex: "link",
-      key: "link",
-      render: (_, record) => (
-        <a
-          onClick={() => handleCloseDrawer(false)}
-          href={`/coins/${record.coinFrom}/${record.coinTo}?range=1D`}
-          rel="noreferrer"
-          target="_blank"
-        >
-          Link
-        </a>
-      ),
-    },
+    // {
+    //   title: "Link",
+    //   dataIndex: "link",
+    //   key: "link",
+    //   render: (_, record) => (
+    //     <a
+    //       onClick={() => handleCloseDrawer(false)}
+    //       href={`/coins/${record.coinFrom}/${record.coinTo}?range=1D`}
+    //       rel="noreferrer"
+    //       target="_blank"
+    //     >
+    //       Link
+    //     </a>
+    //   ),
+    // },
   ];
   return (
-    <Table
-      className={styles.table}
-      columns={columns}
-      bordered
-      dataSource={list?.length > 0 ? list.filter((v) => v.watched) : []}
-    />
+    <Row>
+      <Col xs={24} sm={24} md={16} lg={8} xl={8}>
+        <Table
+          className={styles.table}
+          columns={columns}
+          bordered
+          dataSource={list?.length > 0 ? list.filter((v) => v.watched) : []}
+        />
+      </Col>
+    </Row>
   );
 };
 function App() {
