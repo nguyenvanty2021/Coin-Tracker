@@ -54,6 +54,8 @@ const ChartComponent = (props: any) => {
     areaTopColor: "#2962FF",
     areaBottomColor: "rgba(41, 98, 255, 0.28)",
   };
+  const formatDate = (time: number, type: string) =>
+    moment.unix(time).format(type);
   const chartContainerRef: any = useRef();
   const priceFirst = data[0].value;
   useEffect(() => {
@@ -85,28 +87,11 @@ const ChartComponent = (props: any) => {
       timeScale: {
         tickMarkFormatter: (time: any) => {
           return range !== "1D"
-            ? new Date(
-                dateToString(time, "MM/DD/YYYY HH:MM:ss")
-              ).toLocaleString("en-US", {
-                day: "numeric",
-                month: "numeric",
-                year: "numeric",
-                hour12: true,
-              })
+            ? formatDate(time, "DD/MM/YYYY")
             : data[0].time === time || data[data.length - 1].time === time
-            ? new Date(
-                dateToString(time, "MM/DD/YYYY HH:MM:ss")
-              ).toLocaleString("en-US", {
-                day: "numeric",
-                month: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                second: "numeric",
-                hour12: true,
-              })
+            ? formatDate(time, "DD/MM/YYYY HH:MM:ss")
             : new Date(
-                dateToString(time, "MM/DD/YYYY HH:MM:ss")
+                dateToString(time, "DD/MM/YYYY HH:MM:ss")
               ).toLocaleString("en-US", {
                 hour: "numeric",
                 minute: "numeric",
@@ -164,7 +149,7 @@ const ChartComponent = (props: any) => {
         toolTip.innerHTML = `<div style="display:flex; justify-content:space-between;" >
           <b style="font-size:0.85rem;color:black;" >${dateToString(
             param.time,
-            "MM/DD/YYYY"
+            "DD/MM/YYYY"
           )}</b>
           <b style="color: #A0A7B5;font-size: 0.75rem;" >${new Date(
             dateToString(param.time, "MM/DD/YYYY HH:MM:ss")
