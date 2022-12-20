@@ -1,10 +1,21 @@
-import { HeartFilled, HeartOutlined } from "@ant-design/icons";
-import { Radio } from "antd";
+// import { HeartFilled, HeartOutlined } from "@ant-design/icons";
+import { DatePicker, Dropdown, MenuProps } from "antd";
+import expand from "./../../Assets/img/expand.png";
+import noExpand from "./../../Assets/img/noExpand.png";
 import styles from "./styles.module.scss";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
+import { useScreenshot, createFileName } from "use-react-screenshot";
+import {
+  createRef,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import coinApi from "../../Api/coinApi";
 import {
-  DrawerComponent,
+  // DrawerComponent,
   handleFormatCoinPrice,
   listTimeRange,
   ListWatchedProps,
@@ -21,6 +32,11 @@ import numeral from "numeral";
 import moment from "moment";
 import SecondaryChart from "../../Components/SecondaryChart";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import PrintComponents from "react-print-components";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+const { RangePicker } = DatePicker;
 const handleFormatCoin = (coin: number) => {
   return coin < 0.01
     ? 0.000001
@@ -30,8 +46,8 @@ const handleFormatCoin = (coin: number) => {
     ? 0.0001
     : 0.01;
 };
-const timeDebounce = 400;
-function debounce(fn: any, wait?: number) {
+export const timeDebounce = 400;
+export function debounce(fn: any, wait?: number) {
   let timerId: any, lastArguments: any, lastThis: any;
   return (...args: any) => {
     timerId && clearTimeout(timerId);
@@ -45,8 +61,7 @@ function debounce(fn: any, wait?: number) {
   };
 }
 const ChartComponent = (props: any) => {
-  const { data, range } = props;
-  const heightDefault = 300;
+  const { data, range, heightDefault } = props;
   const colors: any = {
     backgroundColor: "white",
     lineColor: "#2962FF",
@@ -195,17 +210,25 @@ const ChartComponent = (props: any) => {
     colors.textColor,
     colors.areaTopColor,
     colors.areaBottomColor,
+    heightDefault,
   ]);
 
   return (
     <div className={styles.chart} id="container" ref={chartContainerRef} />
   );
 };
-const ChartComponentHOC = memo(ChartComponent);
+export const ChartComponentHOC = memo(ChartComponent);
 const Coins = () => {
   const [boxWidth, setBoxWidth] = useState<number>(0);
   const params = useParams();
-  const [openWatchList, setOpenWatchList] = useState<boolean>(false);
+  // const [openWatchList, setOpenWatchList] = useState<boolean>(false);
+  // const [indexClicked, setIndexClicked] = useState<number>(0);
+  const [indexScale, setIndexScale] = useState<number>(0);
+  const listScale = ["Linear Scale", "Log Scale"];
+  const [zoom, setZoom] = useState({
+    status: false,
+    heightDefault: 300,
+  });
   const { height } = useWindowDimensions();
   const { from, to }: any = params;
   const queryParam = getQueryParam<any>();
@@ -213,21 +236,21 @@ const Coins = () => {
   const [listWatchedState, setListWatchedState] = useState<ListWatchedProps[]>(
     local ? JSON.parse(local) : []
   );
-  const indexHeart =
-    listWatchedState?.length > 0
-      ? listWatchedState.findIndex(
-          (values) => `${values.coinFrom}${values.coinTo}` === `${from}${to}`
-        )
-      : -1;
-  const [statusHeart, setStatusHeart] = useState<boolean>(
-    indexHeart > -1 ? listWatchedState[indexHeart].watched : false
-  );
+  // const indexHeart =
+  //   listWatchedState?.length > 0
+  //     ? listWatchedState.findIndex(
+  //         (values) => `${values.coinFrom}${values.coinTo}` === `${from}${to}`
+  //       )
+  //     : -1;
+  // const [statusHeart, setStatusHeart] = useState<boolean>(
+  //   indexHeart > -1 ? listWatchedState[indexHeart].watched : false
+  // );
   const [listChartModal, setListChartModal] = useState<any[]>([]);
   const indexRange = Object.keys(TimePeriod).findIndex(
     (values) => values === queryParam["range"]
   );
   const [secondList, setSecondList] = useState<any>([]);
-  const gridItemRef = useRef<HTMLDivElement>(null);
+  const gridItemRef: any = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleCoupleCoin = useCallback(
@@ -361,13 +384,96 @@ const Coins = () => {
     }, timeDebounce),
     []
   );
-  const handleUpdateStatusHeart = () => {
-    setStatusHeart(!statusHeart);
-    const listTemp = [...listWatchedState];
-    listTemp[indexHeart].watched = !statusHeart;
-    localStorage.setItem("listWatched", JSON.stringify(listTemp));
+  // const handleUpdateStatusHeart = () => {
+  //   setStatusHeart(!statusHeart);
+  //   const listTemp = [...listWatchedState];
+  //   listTemp[indexHeart].watched = !statusHeart;
+  //   localStorage.setItem("listWatched", JSON.stringify(listTemp));
+  // };
+  // const handleCloseDrawer = (status: boolean) => setOpenWatchList(status);
+  // const handleCloseDrawer = () => {};
+  const ref: any = createRef();
+  const [image, takeScreenShot] = useScreenshot({
+    type: "image/jpeg",
+    quality: 1.0,
+  });
+
+  const download = (image, { name = "img", extension = "jpg" } = {}) => {
+    console.log(image);
+    const a = document.createElement("a");
+    a.href = image;
+    a.download = createFileName(extension, name);
+    a.click();
   };
-  const handleCloseDrawer = (status: boolean) => setOpenWatchList(status);
+
+  const downloadScreenshot = (typeImg: string) =>
+    takeScreenShot(ref.current).then((e) =>
+      download(e, {
+        name: "chart",
+        extension: typeImg,
+      })
+    );
+  const createPDF = async () => {
+    const doc: any = document;
+    const pdf = new jsPDF("portrait", "pt", "a4");
+    const data = await html2canvas(doc.querySelector("#pdf"));
+    const img = data.toDataURL("image/png");
+    const imgProperties = pdf.getImageProperties(img);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
+    pdf.addImage(img, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save("chart.pdf");
+  };
+  const doc: any = document;
+
+  const items: MenuProps["items"] = [
+    {
+      label: (
+        <PrintComponents trigger={<p className={styles.px}>Print chart</p>}>
+          {/* <div ref={ref.current}>{ref}</div> */}
+          {/* {doc.querySelector("#pdf")} */}
+          {/* {doc.querySelector("#pdf")} */}
+          123
+        </PrintComponents>
+      ),
+      key: "3",
+    },
+    {
+      type: "divider",
+    },
+    {
+      label: (
+        <p onClick={() => downloadScreenshot("png")} className={styles.px}>
+          Download PNG image
+        </p>
+      ),
+      key: "0",
+    },
+    {
+      label: (
+        <p onClick={() => downloadScreenshot("jpeg")} className={styles.px}>
+          Download JPEG image
+        </p>
+      ),
+      key: "1",
+    },
+    {
+      label: (
+        <p onClick={createPDF} className={styles.px}>
+          Download PDF document
+        </p>
+      ),
+      key: "2",
+    },
+    {
+      label: (
+        <p onClick={() => downloadScreenshot("svg")} className={styles.px}>
+          Download SVG vector image
+        </p>
+      ),
+      key: "4",
+    },
+  ];
   useEffect(() => {
     setLoading(true);
     // handleCheckCoin();
@@ -390,15 +496,125 @@ const Coins = () => {
     <div className={styles.coins} ref={gridItemRef}>
       {loading && <Loading />}
       {listChartModal?.length > 0 && (
-        <>
-          <div className={styles.range}>
-            {/* <Button
-              className={styles.range__btn}
-              onClick={() => setOpenWatchList(!openWatchList)}
-              type="primary"
-            >
-              My Watchlist
-            </Button> */}
+        <div>
+          <div>
+            {!zoom.status && (
+              <h3 className={styles.new}>Total Cryptocurrency Market Cap</h3>
+            )}
+            <div id="pdf" ref={ref}>
+              <div className={styles.title}>
+                <div className={styles.title__child}>
+                  <p className={styles.title__child__zoom}>Zoom</p>
+                  <div className={styles.title__child__range}>
+                    {listTimeRange.map((v, index) => (
+                      <p
+                        key={index}
+                        onClick={() => {
+                          const indexRange = Object.values(
+                            TimePeriod
+                          ).findIndex((values) => values === v.value);
+                          updateUrl(
+                            "range",
+                            indexRange > -1
+                              ? Object.keys(TimePeriod)[indexRange]
+                              : "1D"
+                          );
+                          setLoading(true);
+                          // setIndexClicked(index);
+                          handleCoupleCoin(
+                            Object.values(TimePeriod)[indexRange]
+                          );
+                        }}
+                        className={`${styles.title__child__range__item} ${
+                          indexRange === index
+                            ? styles.title__child__range__itemClicked
+                            : ""
+                        }`}
+                      >
+                        {v.key}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+                <div
+                  className={`${styles.title__child} ${styles.title__child__right}`}
+                >
+                  <div className={styles.title__child__range}>
+                    {listScale.map((v, index) => (
+                      <p
+                        key={index}
+                        onClick={() => setIndexScale(index)}
+                        className={`${styles.title__child__range__item} ${
+                          styles.title__child__range__itemScaleSpecial
+                        } ${
+                          indexScale === index
+                            ? styles.title__child__range__itemScale
+                            : ""
+                        }`}
+                      >
+                        {v}
+                      </p>
+                    ))}
+                    <div className={styles.title__child__rangeIcon}>
+                      {/* <FontAwesomeIcon
+                      onClick={() => setZoom(!zoom)}
+                      className={styles.title__child__rangeIcon__item}
+                      icon={faExpand}
+                    /> */}
+                      <img
+                        src={!zoom.status ? expand : noExpand}
+                        onClick={() =>
+                          setZoom({
+                            ...zoom,
+                            status: !zoom.status,
+                            heightDefault: !zoom.status ? 550 : 300,
+                          })
+                        }
+                        alt=""
+                        className={styles.title__child__rangeIcon__item}
+                      />
+                    </div>
+                    <div className={styles.title__child__rangeIcon}>
+                      <Dropdown menu={{ items }} trigger={["click"]}>
+                        <FontAwesomeIcon
+                          className={styles.title__child__rangeIcon__item}
+                          icon={faBars}
+                        />
+                      </Dropdown>
+                    </div>
+                  </div>
+                  <div>
+                    <RangePicker
+                      className={styles.title__child__datepicker}
+                      suffixIcon={null}
+                      style={{ color: "red" }}
+                      bordered={false}
+                    />
+                  </div>
+                </div>
+              </div>
+              <ChartComponentHOC
+                from={from}
+                to={to}
+                heightDefault={zoom.heightDefault}
+                range={queryParam["range"]}
+                data={listChartModal?.length > 0 ? listChartModal : []}
+              />
+              <SecondaryChart
+                data={secondList?.length > 0 ? secondList : []}
+                height={Math.floor(height * 0.05)}
+                width={boxWidth}
+                setListChartModal={setListChartModal}
+                margin={{
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                }}
+              />
+            </div>
+          </div>
+          {/* <div className={styles.range}>
             <Radio.Group
               className={styles.range__btn}
               onChange={(e) => {
@@ -427,8 +643,8 @@ const Coins = () => {
                   );
                 })}
             </Radio.Group>
-          </div>
-          <div className={styles.coins__title}>
+          </div> */}
+          {/* <div className={styles.coins__title}>
             <h3>
               <b style={{ marginRight: "0.35rem" }}>
                 {from && to && `${from.toUpperCase()} to ${to.toUpperCase()}`}
@@ -446,26 +662,8 @@ const Coins = () => {
                 className={styles.chart__heart}
               />
             )}
-          </div>
-          <ChartComponentHOC
-            from={from}
-            to={to}
-            range={queryParam["range"]}
-            data={listChartModal?.length > 0 ? listChartModal : []}
-          />
-          <SecondaryChart
-            data={secondList?.length > 0 ? secondList : []}
-            height={Math.floor(height * 0.05)}
-            width={boxWidth}
-            setListChartModal={setListChartModal}
-            margin={{
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-            }}
-          />
-          <h3 className={styles.title}>My Watchlist</h3>
+          </div> */}
+          {/* <h3 className={styles.title}>My Watchlist</h3>
           <DrawerComponent
             coinCurrent={
               from && to && `${from.toUpperCase()}/${to.toUpperCase()}`
@@ -477,8 +675,8 @@ const Coins = () => {
             }
             handleCloseDrawer={handleCloseDrawer}
             list={listWatchedState}
-          />
-        </>
+          /> */}
+        </div>
       )}
     </div>
   );
