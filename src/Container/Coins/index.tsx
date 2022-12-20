@@ -433,7 +433,7 @@ const Coins = () => {
           {/* <div ref={ref.current}>{ref}</div> */}
           {/* {doc.querySelector("#pdf")} */}
           {/* {doc.querySelector("#pdf")} */}
-          123
+          content
         </PrintComponents>
       ),
       key: "3",
