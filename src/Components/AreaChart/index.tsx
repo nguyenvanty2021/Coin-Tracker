@@ -34,9 +34,9 @@ const AreaChart: React.FC<AreaChartProps> = ({
       <LinearGradient
         id="gradient"
         from={gradientColor}
-        fromOpacity={1}
+        // fromOpacity={1}
         to={gradientColor}
-        toOpacity={0.2}
+        // toOpacity={0.2}
       />
       <AreaClosed<DataProps>
         data={data}

@@ -36,6 +36,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import PrintComponents from "react-print-components";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { MinusOutlined } from "@ant-design/icons";
 const { RangePicker } = DatePicker;
 const handleFormatCoin = (coin: number) => {
   return coin < 0.01
@@ -61,7 +62,7 @@ export function debounce(fn: any, wait?: number) {
   };
 }
 const ChartComponent = (props: any) => {
-  const { data, range, heightDefault } = props;
+  const { data, range, heightDefault, title } = props;
   const colors: any = {
     backgroundColor: "white",
     lineColor: "#2962FF",
@@ -86,19 +87,31 @@ const ChartComponent = (props: any) => {
         textColor: colors.textColor,
       },
       rightPriceScale: {
+        // invertScale: true,
+        // // borderVisible: false,
+        // scaleMargins: {
+        //   top: 0.3,
+        //   bottom: 0.25,
+        // },
+        visible: false,
+      },
+      leftPriceScale: {
         scaleMargins: {
-          top: 0.3,
+          top: 0.3, // leave some space for the legend
           bottom: 0.25,
         },
+        visible: true,
+        // borderVisible: false,
       },
       grid: {
         vertLines: {
           visible: false,
         },
         horzLines: {
-          visible: false,
+          visible: true,
         },
       },
+
       timeScale: {
         tickMarkFormatter: (time: any) => {
           return range !== "1D"
@@ -119,6 +132,7 @@ const ChartComponent = (props: any) => {
       height: heightDefault,
     });
     chart.timeScale().fitContent();
+    //  addLineSeries
     let newSeries = chart.addAreaSeries({
       priceFormat: {
         type: "price",
@@ -126,12 +140,38 @@ const ChartComponent = (props: any) => {
         minMove: handleFormatCoin(priceFirst),
       },
       lineWidth: 2,
+      // price: 1234,
+      // lastValueVisible: false,
+      // priceLineVisible: false,
       crossHairMarkerVisible: false,
       lineColor: colors.lineColor,
       topColor: colors.areaTopColor,
       bottomColor: colors.areaBottomColor,
+      // axisLabelVisible: true,
+      // title: "my label",
     });
-    newSeries.setData(data);
+    title.marketCap && newSeries.setData(data);
+    const volumeSeries = chart.addHistogramSeries({
+      color: "black",
+      priceFormat: {
+        type: "volume",
+      },
+      priceScaleId: "", // set as an overlay by setting a blank priceScaleId
+      // set the positioning of the volume series
+      scaleMargins: {
+        top: 0.875, // highest point of the series will be 70% away from the top
+        bottom: 0,
+      },
+    });
+    volumeSeries.applyOptions({
+      scaleMargins: {
+        top: 0.875, // highest point of the series will be 70% away from the top
+        bottom: 0, // lowest point will be at the very bottom.
+        // top: 0.1, // highest point of the series will be 10% away from the top
+        // bottom: 0.4, // lowest point will be 40% away from the bottom
+      },
+    });
+    title.vol && volumeSeries.setData(data);
     const container: any = document.getElementById("container");
     function dateToString(date: any, type: string) {
       const dateString = moment.unix(date).format(type);
@@ -145,7 +185,7 @@ const ChartComponent = (props: any) => {
     toolTip.style = `width: 200px; height: 65px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
     toolTip.style.background = "white";
     toolTip.style.color = "black";
-    toolTip.style.borderColor = "rgba( 38, 166, 154, 1)";
+    toolTip.style.borderColor = "#BCBDBC";
     container.appendChild(toolTip);
     // update tooltip
     chart.subscribeCrosshairMove((param: any) => {
@@ -211,6 +251,7 @@ const ChartComponent = (props: any) => {
     colors.areaTopColor,
     colors.areaBottomColor,
     heightDefault,
+    title,
   ]);
 
   return (
@@ -251,6 +292,10 @@ const Coins = () => {
   );
   const [secondList, setSecondList] = useState<any>([]);
   const gridItemRef: any = useRef<HTMLDivElement>(null);
+  const [title, setTitle] = useState({
+    marketCap: true,
+    vol: true,
+  });
   const [loading, setLoading] = useState<boolean>(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleCoupleCoin = useCallback(
@@ -593,13 +638,38 @@ const Coins = () => {
                   </div>
                 </div>
               </div>
-              <ChartComponentHOC
-                from={from}
-                to={to}
-                heightDefault={zoom.heightDefault}
-                range={queryParam["range"]}
-                data={listChartModal?.length > 0 ? listChartModal : []}
-              />
+              <div className={styles.chartLightweight}>
+                <div
+                  className={`${styles.chartLightweight__title} ${
+                    !zoom.status
+                      ? styles.chartLightweight__titleHeight300
+                      : styles.chartLightweight__titleHeight550
+                  }`}
+                >
+                  <h3
+                    className={
+                      title.vol ? styles.titleShow : styles.titleHidden
+                    }
+                  >
+                    <b>24h Vol</b>
+                  </h3>
+                  <h3
+                    className={`${styles.chartLightweight__title__market} ${
+                      title.marketCap ? styles.titleShow : styles.titleHidden
+                    }`}
+                  >
+                    <b>Market Cap</b>
+                  </h3>
+                </div>
+                <ChartComponentHOC
+                  from={from}
+                  to={to}
+                  title={title}
+                  heightDefault={zoom.heightDefault}
+                  range={queryParam["range"]}
+                  data={listChartModal?.length > 0 ? listChartModal : []}
+                />
+              </div>
               <SecondaryChart
                 data={secondList?.length > 0 ? secondList : []}
                 height={Math.floor(height * 0.05)}
@@ -612,6 +682,32 @@ const Coins = () => {
                   left: 0,
                 }}
               />
+              <div className={styles.market}>
+                <div
+                  onClick={() =>
+                    setTitle({ ...title, marketCap: !title.marketCap })
+                  }
+                  className={`${styles.market__cap} ${
+                    !title.marketCap ? styles.marketDisable : ""
+                  }`}
+                >
+                  <span className={styles.market__cap__icon}></span>
+                  <h3>
+                    <b>Market Cap</b>
+                  </h3>
+                </div>
+                <div
+                  onClick={() => setTitle({ ...title, vol: !title.vol })}
+                  className={`${styles.market__dot} ${
+                    !title.vol ? styles.marketDisable : ""
+                  }`}
+                >
+                  <span className={styles.market__dot__item}></span>
+                  <h3>
+                    <b>24h Vol</b>
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
           {/* <div className={styles.range}>
