@@ -119,7 +119,7 @@ const ChartComponent = (props: any) => {
             : data[0].time === time || data[data.length - 1].time === time
             ? formatDate(time, "DD/MM/YYYY HH:MM:ss")
             : new Date(
-                dateToString(time, "DD/MM/YYYY HH:MM:ss")
+                dateToString(time, "MM/DD/YYYY HH:MM:ss")
               ).toLocaleString("en-US", {
                 hour: "numeric",
                 minute: "numeric",
@@ -182,7 +182,7 @@ const ChartComponent = (props: any) => {
     const toolTipMargin = 0;
     // Create and style the tooltip html element
     const toolTip: any = document.createElement("div");
-    toolTip.style = `width: 200px; height: 65px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
+    toolTip.style = `width: 200px; height: 95px; position: absolute; display: none; padding: 8px; box-sizing: border-box; font-size: 12px; text-align: left; z-index: 1000; top: 12px; left: 12px; pointer-events: none; border: 1px solid; border-radius: 2px;font-family: 'Trebuchet MS', Roboto, Ubuntu, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`;
     toolTip.style.background = "white";
     toolTip.style.color = "black";
     toolTip.style.borderColor = "#BCBDBC";
@@ -215,8 +215,22 @@ const ChartComponent = (props: any) => {
             hour12: true,
           })}</b>
         </div>
-        <div style="display:flex;margin: 4px 0px;justify-content:flex-start;align-items:center;" >
-          <b style="color: #A0A7B5;font-size:0.85rem;" >Price:</b>
+        <div style="display:flex;margin: 4px 0px;justify-content:flex-start;align-items:center;">
+        <div>
+        <span style="width:12px;height:12px;background-color:#2862ff;display:inline-block;border-radius:50%;margin-right:2.5px;" ></span>
+        <span style="color: black;font-size:0.85rem;">Market Cap:</span>
+        </div>
+          <b style="color: black;font-size: 1rem;margin-left: 0.25rem;">
+        $${price.toFixed(
+          price < 0.01 ? 7 : price < 0.1 ? 5 : price < 10 ? 3 : 3
+        )}
+        </b>
+        </div>
+        <div style="display:flex;margin: 4px 0px;justify-content:flex-start;align-items:center;">
+        <div>
+        <span style="width:12px;height:12px;background-color:black;display:inline-block;border-radius:50%;margin-right:2.5px;" ></span>
+        <span style="color: black;font-size:0.85rem;">24h Vol:</span>
+        </div>
           <b style="color: black;font-size: 1rem;margin-left: 0.25rem;">
         $${price.toFixed(
           price < 0.01 ? 7 : price < 0.1 ? 5 : price < 10 ? 3 : 3
