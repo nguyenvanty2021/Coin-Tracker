@@ -66,9 +66,11 @@ const formatDate = (time: number, type: string) =>
   moment.unix(time).format(type);
 const RangePickerComp = ({
   listChartModal,
+  setStatusClearDate,
   setListChartModal,
 }: {
   listChartModal: any[];
+  setStatusClearDate: any;
   setListChartModal: any;
 }) => {
   const [dateCommon, setDateCommon] = useState({
@@ -78,18 +80,26 @@ const RangePickerComp = ({
   // const formatFunc = (date: any) =>
   //   moment(date.split("/").reverse().join("-")).format("ll");
   const onChange = (value: any) => {
-    const start: number = moment(new Date(value[0])).unix();
-    const end: number = moment(new Date(value[1])).unix();
-    // setDateCommon({
-    //   ...dateCommon,
-    //   start,
-    //   end,
-    // });
-    const listTemp = [...listChartModal];
-    const resultFilter = listTemp.filter(
-      (v) => v.time >= start && v.time <= end
-    );
-    resultFilter.length > 0 && setListChartModal([...resultFilter]);
+    if (value?.length > 0) {
+      const today = new Date(value[1]);
+      const tomorrow = new Date(today);
+      const start: number = moment(new Date(value[0])).unix();
+      const end: number = moment(
+        new Date(tomorrow.setDate(today.getDate() + 1))
+      ).unix();
+      // setDateCommon({
+      //   ...dateCommon,
+      //   start,
+      //   end,
+      // });
+      const listTemp = [...listChartModal];
+      const resultFilter = listTemp.filter(
+        (v) => v.time >= start && v.time <= end
+      );
+      resultFilter.length > 0 && setListChartModal([...resultFilter]);
+    } else {
+      setStatusClearDate(true);
+    }
   };
   useEffect(() => {
     setDateCommon({
@@ -351,6 +361,7 @@ const ChartComponent = (props: any) => {
 export const ChartComponentHOC = memo(ChartComponent);
 const Coins = () => {
   const [boxWidth, setBoxWidth] = useState<number>(0);
+  const [statusClearDate, setStatusClearDate] = useState<boolean>(false);
   const params = useParams();
   // const [openWatchList, setOpenWatchList] = useState<boolean>(false);
   // const [indexClicked, setIndexClicked] = useState<number>(0);
@@ -535,7 +546,6 @@ const Coins = () => {
   });
 
   const download = (image, { name = "img", extension = "jpg" } = {}) => {
-    console.log(image);
     const a = document.createElement("a");
     a.href = image;
     a.download = createFileName(extension, name);
@@ -648,8 +658,9 @@ const Coins = () => {
     setLoading(true);
     // handleCheckCoin();
     handleCoupleCoin(Object.values(TimePeriod)[indexRange]);
+    setStatusClearDate(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [statusClearDate]);
   useEffect(() => {
     const handleResize = (width?: number) => {
       setBoxWidth(width || 0);
@@ -761,6 +772,7 @@ const Coins = () => {
                   </div>
                   <div>
                     <RangePickerCompHOC
+                      setStatusClearDate={setStatusClearDate}
                       setListChartModal={setListChartModal}
                       listChartModal={listChartModal}
                     />
