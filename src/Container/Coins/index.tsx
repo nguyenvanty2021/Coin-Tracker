@@ -4,6 +4,7 @@ import expand from "./../../Assets/img/expand.png";
 import noExpand from "./../../Assets/img/noExpand.png";
 import { useReactToPrint } from "react-to-print";
 import styles from "./styles.module.scss";
+
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { useScreenshot, createFileName } from "use-react-screenshot";
 import {
@@ -34,10 +35,9 @@ import moment from "moment";
 import SecondaryChart from "../../Components/SecondaryChart";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import PrintComponents from "react-print-components";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { MinusOutlined } from "@ant-design/icons";
+const formatDateNormal = "DD/MM/YYYY";
 const { RangePicker } = DatePicker;
 const handleFormatCoin = (coin: number) => {
   return coin < 0.01
@@ -62,6 +62,83 @@ export function debounce(fn: any, wait?: number) {
     }, wait || timeDebounce);
   };
 }
+const formatDate = (time: number, type: string) =>
+  moment.unix(time).format(type);
+const RangePickerComp = ({
+  listChartModal,
+  setListChartModal,
+}: {
+  listChartModal: any[];
+  setListChartModal: any;
+}) => {
+  const [dateCommon, setDateCommon] = useState({
+    start: listChartModal[0].time,
+    end: listChartModal[listChartModal?.length - 1].time,
+  });
+  // const formatFunc = (date: any) =>
+  //   moment(date.split("/").reverse().join("-")).format("ll");
+  const onChange = (value: any) => {
+    const start: number = moment(new Date(value[0])).unix();
+    const end: number = moment(new Date(value[1])).unix();
+    // setDateCommon({
+    //   ...dateCommon,
+    //   start,
+    //   end,
+    // });
+    const listTemp = [...listChartModal];
+    const resultFilter = listTemp.filter(
+      (v) => v.time >= start && v.time <= end
+    );
+    resultFilter.length > 0 && setListChartModal([...resultFilter]);
+  };
+  useEffect(() => {
+    setDateCommon({
+      ...dateCommon,
+      start: listChartModal[0].time,
+      end: listChartModal[listChartModal?.length - 1].time,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listChartModal]);
+
+  return (
+    <RangePicker
+      onChange={onChange}
+      className={styles.title__child__datepicker}
+      suffixIcon={null}
+      disabledDate={(current: any) => {
+        return (
+          dateCommon.start >= moment(new Date(current)).unix() ||
+          dateCommon.end <= moment(new Date(current)).unix()
+        );
+      }}
+      // dateRender={(current: any) => {
+      //   const style: React.CSSProperties = {};
+      //   if (
+      //     dateCommon.start < moment(new Date(current)).unix() &&
+      //     dateCommon.end > moment(new Date(current)).unix()
+      //   ) {
+      //     style.border = "1px solid #1890ff";
+      //     style.borderRadius = "50%";
+      //   }
+      //   return (
+      //     <div className="ant-picker-cell-inner" style={style}>
+      //       {current.date()}
+      //     </div>
+      //   );
+      // }}
+      value={[
+        moment(
+          formatDate(dateCommon.start, formatDateNormal),
+          formatDateNormal
+        ),
+        moment(formatDate(dateCommon.end, formatDateNormal), formatDateNormal),
+      ]}
+      format={formatDateNormal}
+      bordered={false}
+    />
+  );
+};
+const RangePickerCompHOC = memo(RangePickerComp);
 const ChartComponent = (props: any) => {
   const { data, range, heightDefault, title } = props;
   const colors: any = {
@@ -71,8 +148,6 @@ const ChartComponent = (props: any) => {
     areaTopColor: "#2962FF",
     areaBottomColor: "rgba(41, 98, 255, 0.28)",
   };
-  const formatDate = (time: number, type: string) =>
-    moment.unix(time).format(type);
   const chartContainerRef: any = useRef();
   const priceFirst = data[0].value;
   useEffect(() => {
@@ -116,7 +191,7 @@ const ChartComponent = (props: any) => {
       timeScale: {
         tickMarkFormatter: (time: any) => {
           return range !== "1D"
-            ? formatDate(time, "DD/MM/YYYY")
+            ? formatDate(time, formatDateNormal)
             : data[0].time === time || data[data.length - 1].time === time
             ? formatDate(time, "DD/MM/YYYY HH:MM:ss")
             : new Date(
@@ -205,7 +280,7 @@ const ChartComponent = (props: any) => {
         toolTip.innerHTML = `<div style="display:flex; justify-content:space-between;" >
           <b style="font-size:0.85rem;color:black;" >${dateToString(
             param.time,
-            "DD/MM/YYYY"
+            formatDateNormal
           )}</b>
           <b style="color: #A0A7B5;font-size: 0.75rem;" >${new Date(
             dateToString(param.time, "MM/DD/YYYY HH:MM:ss")
@@ -685,11 +760,9 @@ const Coins = () => {
                     </div>
                   </div>
                   <div>
-                    <RangePicker
-                      className={styles.title__child__datepicker}
-                      suffixIcon={null}
-                      style={{ color: "red" }}
-                      bordered={false}
+                    <RangePickerCompHOC
+                      setListChartModal={setListChartModal}
+                      listChartModal={listChartModal}
                     />
                   </div>
                 </div>
