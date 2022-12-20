@@ -307,7 +307,7 @@ const ChartComponent = (props: any) => {
         <span style="color: black;font-size:0.85rem;">Market Cap:</span>
         </div>
           <b style="color: black;font-size: 1rem;margin-left: 0.25rem;">
-        $${price.toFixed(
+        ${price.toFixed(
           price < 0.01 ? 7 : price < 0.1 ? 5 : price < 10 ? 3 : 3
         )}
         </b>
@@ -318,7 +318,7 @@ const ChartComponent = (props: any) => {
         <span style="color: black;font-size:0.85rem;">24h Vol:</span>
         </div>
           <b style="color: black;font-size: 1rem;margin-left: 0.25rem;">
-        $${price.toFixed(
+        ${price.toFixed(
           price < 0.01 ? 7 : price < 0.1 ? 5 : price < 10 ? 3 : 3
         )}
         </b>
