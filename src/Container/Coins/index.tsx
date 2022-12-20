@@ -91,7 +91,7 @@ const ChartComponent = (props: any) => {
             : data[0].time === time || data[data.length - 1].time === time
             ? formatDate(time, "DD/MM/YYYY HH:MM:ss")
             : new Date(
-                dateToString(time, "DD/MM/YYYY HH:MM:ss")
+                dateToString(time, "MM/DD/YYYY HH:MM:ss")
               ).toLocaleString("en-US", {
                 hour: "numeric",
                 minute: "numeric",
