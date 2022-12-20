@@ -2,6 +2,7 @@
 import { DatePicker, Dropdown, MenuProps } from "antd";
 import expand from "./../../Assets/img/expand.png";
 import noExpand from "./../../Assets/img/noExpand.png";
+import { useReactToPrint } from "react-to-print";
 import styles from "./styles.module.scss";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { useScreenshot, createFileName } from "use-react-screenshot";
@@ -286,6 +287,7 @@ const Coins = () => {
   });
   const { height } = useWindowDimensions();
   const { from, to }: any = params;
+  const [checkClickedSelect, setCheckClickedSelect] = useState<boolean>(false);
   const queryParam = getQueryParam<any>();
   const local: any = localStorage?.getItem("listWatched");
   const [listWatchedState, setListWatchedState] = useState<ListWatchedProps[]>(
@@ -483,17 +485,27 @@ const Coins = () => {
     pdf.addImage(img, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.save("chart.pdf");
   };
-  const doc: any = document;
-
+  const handlePrint = useReactToPrint({
+    content: () => ref.current,
+  });
   const items: MenuProps["items"] = [
     {
       label: (
-        <PrintComponents trigger={<p className={styles.px}>Print chart</p>}>
-          {/* <div ref={ref.current}>{ref}</div> */}
-          {/* {doc.querySelector("#pdf")} */}
-          {/* {doc.querySelector("#pdf")} */}
-          content
-        </PrintComponents>
+        // <PrintComponents trigger={<p className={styles.px}>Print chart</p>}>
+        //   {/* <div ref={ref.current}>{ref}</div> */}
+        //   {/* {doc.querySelector("#pdf")} */}
+        //   {/* {doc.querySelector("#pdf")} */}
+        //   content
+        // </PrintComponents>
+        <p
+          onClick={async () => {
+            await handlePrint();
+            await setCheckClickedSelect(!checkClickedSelect);
+          }}
+          className={styles.px}
+        >
+          Print chart
+        </p>
       ),
       key: "3",
     },
@@ -502,7 +514,13 @@ const Coins = () => {
     },
     {
       label: (
-        <p onClick={() => downloadScreenshot("png")} className={styles.px}>
+        <p
+          onClick={async () => {
+            await downloadScreenshot("png");
+            await setCheckClickedSelect(!checkClickedSelect);
+          }}
+          className={styles.px}
+        >
           Download PNG image
         </p>
       ),
@@ -510,7 +528,13 @@ const Coins = () => {
     },
     {
       label: (
-        <p onClick={() => downloadScreenshot("jpeg")} className={styles.px}>
+        <p
+          onClick={async () => {
+            await downloadScreenshot("jpeg");
+            await setCheckClickedSelect(!checkClickedSelect);
+          }}
+          className={styles.px}
+        >
           Download JPEG image
         </p>
       ),
@@ -518,7 +542,13 @@ const Coins = () => {
     },
     {
       label: (
-        <p onClick={createPDF} className={styles.px}>
+        <p
+          onClick={async () => {
+            await createPDF();
+            await setCheckClickedSelect(!checkClickedSelect);
+          }}
+          className={styles.px}
+        >
           Download PDF document
         </p>
       ),
@@ -526,7 +556,13 @@ const Coins = () => {
     },
     {
       label: (
-        <p onClick={() => downloadScreenshot("svg")} className={styles.px}>
+        <p
+          onClick={async () => {
+            await downloadScreenshot("svg");
+            await setCheckClickedSelect(!checkClickedSelect);
+          }}
+          className={styles.px}
+        >
           Download SVG vector image
         </p>
       ),
@@ -634,7 +670,13 @@ const Coins = () => {
                       />
                     </div>
                     <div className={styles.title__child__rangeIcon}>
-                      <Dropdown menu={{ items }} trigger={["click"]}>
+                      <Dropdown
+                        onOpenChange={() =>
+                          setCheckClickedSelect(!checkClickedSelect)
+                        }
+                        menu={{ items }}
+                        trigger={["click"]}
+                      >
                         <FontAwesomeIcon
                           className={styles.title__child__rangeIcon__item}
                           icon={faBars}
@@ -653,28 +695,31 @@ const Coins = () => {
                 </div>
               </div>
               <div className={styles.chartLightweight}>
-                <div
-                  className={`${styles.chartLightweight__title} ${
-                    !zoom.status
-                      ? styles.chartLightweight__titleHeight300
-                      : styles.chartLightweight__titleHeight550
-                  }`}
-                >
-                  <h3
-                    className={
-                      title.vol ? styles.titleShow : styles.titleHidden
-                    }
-                  >
-                    <b>24h Vol</b>
-                  </h3>
-                  <h3
-                    className={`${styles.chartLightweight__title__market} ${
-                      title.marketCap ? styles.titleShow : styles.titleHidden
+                {!checkClickedSelect && (
+                  <div
+                    className={`${styles.chartLightweight__title} ${
+                      !zoom.status
+                        ? styles.chartLightweight__titleHeight300
+                        : styles.chartLightweight__titleHeight550
                     }`}
                   >
-                    <b>Market Cap</b>
-                  </h3>
-                </div>
+                    <h3
+                      className={
+                        title.vol ? styles.titleShow : styles.titleHidden
+                      }
+                    >
+                      <b>24h Vol</b>
+                    </h3>
+                    <h3
+                      className={`${styles.chartLightweight__title__market} ${
+                        title.marketCap ? styles.titleShow : styles.titleHidden
+                      }`}
+                    >
+                      <b>Market Cap</b>
+                    </h3>
+                  </div>
+                )}
+
                 <ChartComponentHOC
                   from={from}
                   to={to}
